@@ -1,256 +1,89 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Crypto MiniApp</title>
-  <style>
-    :root {
-      --bg: #0a0a0a;
-      --panel: #111111;
-      --border: #1a1a1a;
-      --text: #eaeaea;
-      --muted: #888;
-      --accent: #0070f3;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: "Inter", system-ui, -apple-system, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    .app {
-      width: 380px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      position: relative;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .avatar {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .name {
-      font-weight: 600;
-    }
-
-    .lang {
-      background: #1a1a1a;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 4px 10px;
-      cursor: pointer;
-      font-size: 13px;
-      user-select: none;
-      transition: background .2s;
-    }
-    .lang:hover { background: #222; }
-
-    .balance {
-      text-align: center;
-      margin-top: 6px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .balance-amount {
-      font-size: 36px;
-      font-weight: 700;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .balance-sub {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-    }
-
-    .action-btn {
-      flex: 1;
-      background: #1a1a1a;
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 10px 0;
-      margin: 0 3px;
-      text-align: center;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all .2s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .action-btn:hover {
-      background: #1d1d1d;
-      border-color: #2a2a2a;
-      transform: translateY(-2px);
-    }
-
-    .action-btn .icon {
-      font-size: 20px;
-    }
-
-    .qr-btn {
-      margin-top: 6px;
-      background: linear-gradient(90deg, #0070f3, #00bcd4);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: transform .2s;
-    }
-
-    .qr-btn:hover {
-      transform: translateY(-2px);
-    }
-
-    .qr-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .qr-icon {
-      width: 38px;
-      height: 38px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-    }
-
-    .footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: auto;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crypto Bot Mini App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
-<body>
-  <div class="app">
-    <div class="header">
-      <div class="profile">
-        <div class="avatar"><img src="https://i.pravatar.cc/100" alt=""></div>
-        <div class="name">Yipir</div>
+
+<body class="bg-[#0f172a] text-white font-sans flex flex-col items-center min-h-screen p-4">
+
+  <!-- Верхняя панель -->
+  <div id="header" class="w-full max-w-sm bg-[#1e293b] rounded-2xl p-4 flex items-center gap-3 shadow-lg mt-4">
+    <img id="user-photo" src="" alt="avatar" class="w-12 h-12 rounded-full border border-gray-600" />
+    <div>
+      <h2 id="user-name" class="text-lg font-semibold">Загрузка...</h2>
+      <p class="text-sm text-gray-400">Crypto Bot</p>
+    </div>
+  </div>
+
+  <!-- Баланс -->
+  <div class="text-center my-8">
+    <h1 class="text-4xl font-bold">$0</h1>
+    <p class="text-gray-400 text-sm">Общий баланс в USD</p>
+  </div>
+
+  <!-- Кнопки -->
+  <div class="grid grid-cols-4 gap-3 mb-8 w-full max-w-sm">
+    <button class="bg-[#1e293b] p-3 rounded-2xl hover:bg-[#334155] transition">Пополнить</button>
+    <button class="bg-[#1e293b] p-3 rounded-2xl hover:bg-[#334155] transition">Вывести</button>
+    <button class="bg-[#1e293b] p-3 rounded-2xl hover:bg-[#334155] transition">Обмен</button>
+    <button class="bg-[#1e293b] p-3 rounded-2xl hover:bg-[#334155] transition">Биржа</button>
+  </div>
+
+  <!-- QR -->
+  <div class="w-full max-w-sm bg-[#1e293b] rounded-2xl p-4 mb-8 flex items-center justify-between">
+    <div>
+      <h3 class="font-semibold text-sm">Оплата по QR-коду</h3>
+      <p class="text-xs text-gray-400">Оплачивайте любые покупки с помощью криптовалюты</p>
+    </div>
+    <div class="w-10 h-10 bg-[#334155] rounded-lg flex items-center justify-center text-lg">💳</div>
+  </div>
+
+  <!-- Активы -->
+  <div class="w-full max-w-sm">
+    <h3 class="text-sm text-gray-400 mb-2">Активы</h3>
+
+    <div class="bg-[#1e293b] rounded-2xl p-4 flex items-center justify-between mb-2">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-sm font-bold">T</div>
+        <span>Tether</span>
       </div>
-      <div class="lang" id="lang">RU ▾</div>
+      <div class="text-right text-sm text-gray-300">0 USDT<br>$0</div>
     </div>
 
-    <div class="balance" id="balance">
-      <div class="balance-amount">
-        <span id="symbol">₺</span>
-        <span id="amount">0</span>
+    <div class="bg-[#1e293b] rounded-2xl p-4 flex items-center justify-between mb-2">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-bold">TON</div>
+        <span>Toncoin</span>
       </div>
-      <div class="balance-sub" id="balance-sub">Общий баланс в TRY</div>
+      <div class="text-right text-sm text-gray-300">0 TON<br>$0</div>
     </div>
 
-    <div class="actions">
-      <div class="action-btn">
-        <div class="icon">↩</div>
-        <div>Пополнить</div>
+    <div class="bg-[#1e293b] rounded-2xl p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-sm font-bold">S</div>
+        <span>Solana</span>
       </div>
-      <div class="action-btn">
-        <div class="icon">↪</div>
-        <div>Вывести</div>
-      </div>
-      <div class="action-btn">
-        <div class="icon">🔁</div>
-        <div>Обмен</div>
-      </div>
-      <div class="action-btn">
-        <div class="icon">📈</div>
-        <div>Биржа</div>
-      </div>
+      <div class="text-right text-sm text-gray-300">0 SOL<br>$0</div>
     </div>
-
-    <button class="qr-btn">
-      <div class="qr-left">
-        <div class="qr-icon">QR</div>
-        <div>
-          <div>Оплата по QR-коду</div>
-          <div style="font-size:13px; opacity:0.8;">Оплачивайте покупки с помощью криптовалюты</div>
-        </div>
-      </div>
-      <div>➜</div>
-    </button>
-
-    <div class="footer">@shalopenko</div>
   </div>
 
   <script>
-    const balance = document.getElementById('balance');
-    const symbol = document.getElementById('symbol');
-    const sub = document.getElementById('balance-sub');
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-    const currencies = [
-      { code: 'TRY', symbol: '₺' },
-      { code: 'USD', symbol: '$' },
-      { code: 'RUB', symbol: '₽' },
-      { code: 'EUR', symbol: '€' },
-      { code: 'UAH', symbol: '₴' }
-    ];
-    let current = 0;
+    const user = tg.initDataUnsafe?.user;
 
-    balance.addEventListener('click', () => {
-      current = (current + 1) % currencies.length;
-      const c = currencies[current];
-      symbol.textContent = c.symbol;
-      sub.textContent = `Общий баланс в ${c.code}`;
-    });
+    if (user) {
+      document.getElementById("user-name").textContent = `${user.first_name} ${user.last_name || ""}`;
+      document.getElementById("user-photo").src = user.photo_url || "https://via.placeholder.com/48";
+    } else {
+      document.getElementById("user-name").textContent = "Гость";
+      document.getElementById("user-photo").src = "https://via.placeholder.com/48";
+    }
   </script>
 </body>
 </html>
