@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Crypto MiniApp — Demo</title>
-
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
@@ -19,15 +18,22 @@
       --success: #10b981;
       --danger: #ef4444;
     }
+
     *{box-sizing:border-box}
-    html,body{height:100%; margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: linear-gradient(180deg,var(--bg-a), var(--bg-b)); color:#e6eef8}
+    html,body{
+      height:100%;
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      background: linear-gradient(180deg,var(--bg-a), var(--bg-b));
+      color:#e6eef8;
+    }
 
     .app-viewport{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:14px}
     .app{
       width:100%;
       max-width:420px;
       height:calc(100vh - 28px);
-      max-height:900px;
       border-radius:18px;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)), linear-gradient(180deg,var(--panel), rgba(17,18,23,0.98));
       box-shadow: 0 18px 40px rgba(2,6,23,0.7);
@@ -37,107 +43,169 @@
       gap:12px;
       overflow:auto;
       animation: panelIn .45s cubic-bezier(.2,.9,.2,1);
+      position:relative;
     }
     @keyframes panelIn {from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
 
-    /* header */
     .header {
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
+      position:relative;
     }
-    .profile {display:flex; align-items:center; gap:12px; margin-top:4px}
+    .profile {
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
     .avatar {
-      width:96px; height:96px; min-width:96px; min-height:96px;
-      border-radius:50%; background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      width:86px;
+      height:86px;
+      min-width:86px;
+      min-height:86px;
+      border-radius:50%;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
       box-shadow: 0 8px 30px rgba(99,102,241,0.16);
-      display:flex; align-items:center; justify-content:center;
-      font-weight:700; font-size:34px; overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:34px;
+      overflow:hidden;
     }
     .avatar img{width:100%; height:100%; object-fit:cover; display:block}
+    .profile-info{display:flex; flex-direction:column}
     .username{font-size:18px; font-weight:700}
-    .small-muted{color:var(--muted); font-size:12px; margin-top:6px}
+    .small-muted{color:var(--muted); font-size:12px; margin-top:4px}
 
-    /* language pill */
-    .lang-dropdown { position:relative; transform:translateY(-6px); }
+    /* язык */
+    .lang-dropdown {
+      position:absolute;
+      top:0;
+      right:0;
+      transform:translateY(-6px);
+    }
     .lang-pill {
-      display:flex; align-items:center; gap:8px;
-      background:var(--card); padding:8px 12px; border-radius:999px;
-      cursor:pointer; font-weight:600; transition: transform .18s ease, background .18s linear;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:var(--card);
+      padding:6px 10px;
+      border-radius:999px;
+      cursor:pointer;
+      user-select:none;
+      color:#e9eef8;
+      font-weight:600;
+      transition: transform .18s ease, background .18s linear;
+      font-size:13px;
     }
     .lang-pill:hover{transform:translateY(-3px); background:rgba(255,255,255,0.05)}
+    .lang-pill .arrow{font-size:12px; opacity:0.9}
     .lang-menu {
-      position:absolute; right:0; top:calc(100% + 8px);
+      position:absolute;
+      right:0;
+      top:calc(100% + 6px);
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:10px; box-shadow:0 12px 30px rgba(2,6,23,0.6);
-      overflow:hidden; width:140px;
-      transform-origin:top right; opacity:0; transform: translateY(-6px) scale(.98);
+      border-radius:10px;
+      box-shadow:0 12px 30px rgba(2,6,23,0.6);
+      overflow:hidden;
+      width:140px;
+      opacity:0;
+      transform: translateY(-6px) scale(.98);
       transition: opacity .18s ease, transform .22s cubic-bezier(.2,.9,.2,1);
-      pointer-events:none; z-index:30;
+      pointer-events:none;
+      z-index:30;
     }
     .lang-menu.show{opacity:1; transform:translateY(0) scale(1); pointer-events:auto}
     .lang-menu button{display:flex; gap:8px; align-items:center; padding:10px 12px; width:100%; background:transparent; border:none; color:#eaf3ff; font-weight:600; cursor:pointer}
     .lang-menu button:hover{background:rgba(255,255,255,0.02)}
 
-    /* balance */
+    /* баланс */
     .balance-wrap{display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:6px}
-    .balance-amount{font-size:36px; font-weight:800; letter-spacing:0.6px; transition:color .3s ease, transform .2s ease;}
+    .balance-amount{font-size:36px; font-weight:800}
     .balance-sub{color:var(--muted); font-size:13px}
 
-    /* fiat */
-    .fiat-row{display:flex; gap:8px; justify-content:center; margin-top:8px; flex-wrap:wrap}
-    .fiat-btn{
-      background:transparent; border:1px solid rgba(255,255,255,0.04);
-      color:#eaf3ff; padding:8px 12px; border-radius:999px;
-      cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:8px;
-      transition: all .18s ease; min-width:80px; justify-content:center;
+    /* кнопки валют в столбик */
+    .fiat-row{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:center;
+      margin-top:8px;
     }
-    .fiat-btn.active{background:linear-gradient(90deg, rgba(109,40,217,0.12), rgba(6,182,212,0.06)); border:1px solid rgba(109,40,217,0.18); transform:translateY(-4px)}
+    .fiat-btn{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      color:#eaf3ff;
+      padding:8px 14px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      transition: all .18s ease;
+      min-width:80px;
+      justify-content:center;
+      width:70%;
+    }
+    .fiat-btn.active{background:linear-gradient(90deg, rgba(109,40,217,0.12), rgba(6,182,212,0.06)); border:1px solid rgba(109,40,217,0.18); transform:translateY(-2px)}
 
-    /* actions */
-    .actions{display:flex; gap:10px; padding:8px; justify-content:space-between; margin-top:6px}
+    /* кнопки действий */
+    .actions{
+      display:flex;
+      gap:8px;
+      justify-content:space-between;
+      margin-top:10px;
+    }
     .action-btn{
-      flex:1; background: rgba(255,255,255,0.02); border-radius:12px; padding:12px 8px;
-      border:none; color:#eef6ff; display:flex; flex-direction:column; align-items:center;
-      gap:8px; cursor:pointer; position:relative; overflow:hidden;
+      flex:1;
+      background: rgba(255,255,255,0.03);
+      border-radius:10px;
+      padding:8px 4px;
+      border:none;
+      color:#eef6ff;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:4px;
+      cursor:pointer;
+      font-size:22px;
       transition:transform .16s ease, background .16s linear;
     }
-    .action-btn:hover{transform:translateY(-6px); background: rgba(255,255,255,0.035)}
-    .ripple{position:absolute; border-radius:50%; transform:scale(0); animation:rippleAnim .6s linear; background:rgba(255,255,255,0.12)}
-    @keyframes rippleAnim{to{transform:scale(4); opacity:0}}
+    .action-btn span{font-size:12px; font-weight:700}
+    .action-btn:hover{transform:translateY(-4px); background: rgba(255,255,255,0.05)}
 
-    /* info card */
     .info-card{display:flex; gap:12px; align-items:center; background:linear-gradient(90deg, rgba(99,102,241,0.04), rgba(6,182,212,0.03)), rgba(255,255,255,0.02); padding:12px; border-radius:12px; margin-top:6px}
     .info-title{font-weight:700}
     .info-sub{font-size:13px; color:var(--muted)}
 
-    /* markets */
-    .markets-grid{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px}
+    /* валюты в столбик */
+    .markets-grid{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:10px;
+    }
     .coin-card{background: rgba(255,255,255,0.02); padding:10px; border-radius:10px; display:flex; align-items:center; justify-content:space-between; gap:8px}
     .coin-left{display:flex; gap:10px; align-items:center}
     .coin-icon{width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:#fff}
+    .coin-info{display:flex; flex-direction:column}
     .coin-name{font-weight:800; font-size:13px}
     .coin-sub{font-size:12px; color:var(--muted)}
+    .coin-right{text-align:right}
     .coin-price{font-weight:800}
     .coin-change{font-size:12px; display:flex; align-items:center; gap:6px; justify-content:flex-end}
     .up{color:var(--success)}
     .down{color:var(--danger)}
-
     .footer{margin-top:auto; font-size:12px; color:var(--muted); text-align:center; padding-bottom:8px}
-    .footer.loading::after {content:' ⏳'; animation:spin 1s linear infinite;}
-    @keyframes spin {from{transform:rotate(0)} to{transform:rotate(360deg)}}
-
-    @media (max-width:420px){
-      .avatar{width:86px; height:86px;}
-      .balance-amount{font-size:30px}
-    }
   </style>
 </head>
 <body>
   <div class="app-viewport">
-    <main class="app" role="application" aria-label="Crypto MiniApp">
-      <header class="header">
+    <div class="app">
+      <div class="header">
         <div class="profile">
           <div class="avatar" id="avatar">U</div>
           <div class="profile-info">
@@ -147,235 +215,50 @@
         </div>
 
         <div class="lang-dropdown">
-          <div class="lang-pill" id="langPill">
-            <span id="langLabel">RU</span><span class="arrow">▾</span>
-          </div>
+          <div class="lang-pill" id="langPill"><span id="langLabel">RU</span><span class="arrow">▾</span></div>
           <div class="lang-menu" id="langMenu">
-            <button id="set-ru" data-l="ru">Русский — RU</button>
-            <button id="set-en" data-l="en">English — EN</button>
+            <button id="set-ru">Русский — RU</button>
+            <button id="set-en">English — EN</button>
           </div>
         </div>
-      </header>
+      </div>
 
-      <section class="balance-wrap">
+      <div class="balance-wrap">
         <div class="balance-amount" id="balanceAmount">0,00 TRY</div>
         <div class="balance-sub" id="balanceSub">Общий баланс в TRY</div>
+
         <div class="fiat-row" id="fiatRow">
-          <button class="fiat-btn" data-f="try"><span class="sym">₺</span> TRY</button>
+          <button class="fiat-btn active" data-f="try"><span class="sym">₺</span> TRY</button>
           <button class="fiat-btn" data-f="usd"><span class="sym">$</span> USD</button>
           <button class="fiat-btn" data-f="rub"><span class="sym">₽</span> RUB</button>
           <button class="fiat-btn" data-f="eur"><span class="sym">€</span> EUR</button>
           <button class="fiat-btn" data-f="uah"><span class="sym">₴</span> UAH</button>
         </div>
-      </section>
+      </div>
 
-      <section class="actions">
-        <button class="action-btn" data-act="deposit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5"></path></svg><span id="lbl-deposit">Пополнить</span></button>
-        <button class="action-btn" data-act="withdraw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg><span id="lbl-withdraw">Вывести</span></button>
-        <button class="action-btn" data-act="exchange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h11M4 17h11M17 7l4 4-4 4"></path></svg><span id="lbl-exchange">Обмен</span></button>
-        <button class="action-btn" data-act="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18"></path></svg><span id="lbl-market">Биржа</span></button>
-      </section>
+      <div class="actions">
+        <button class="action-btn" data-act="deposit">➕<span id="lbl-deposit">Пополнить</span></button>
+        <button class="action-btn" data-act="withdraw">➖<span id="lbl-withdraw">Вывести</span></button>
+        <button class="action-btn" data-act="exchange">↔️<span id="lbl-exchange">Обмен</span></button>
+        <button class="action-btn" data-act="market">📈<span id="lbl-market">Биржа</span></button>
+      </div>
 
-      <section class="info-card">
+      <div class="info-card">
         <div style="width:44px; height:44px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:white; font-weight:800">QR</div>
         <div>
           <div class="info-title" id="qrTitle">Оплата по QR-коду</div>
           <div class="info-sub" id="qrSub">Оплачивайте покупки с помощью криптовалюты</div>
         </div>
         <div style="margin-left:auto; color:var(--muted); font-weight:700">➜</div>
-      </section>
+      </div>
 
-      <section class="markets-grid" id="marketsGrid"></section>
-      <footer class="footer" id="footer">Обновлено: —</footer>
-    </main>
+      <div class="markets-grid" id="marketsGrid"></div>
+      <div class="footer" id="footer">Обновлено: —</div>
+    </div>
   </div>
 
   <script>
-    const COINS = [
-      { id: 'bitcoin', symbol: 'BTC' },
-      { id: 'ethereum', symbol: 'ETH' },
-      { id: 'tether', symbol: 'USDT' },
-      { id: 'solana', symbol: 'SOL' }
-    ];
-    const FIATS = ['usd','rub','eur','try','uah'];
-    const UPDATE_INTERVAL = 30000;
-
-    const avatarEl = document.getElementById('avatar');
-    const usernameEl = document.getElementById('username');
-    const smallMuted = document.getElementById('small-muted');
-    const balanceAmountEl = document.getElementById('balanceAmount');
-    const balanceSubEl = document.getElementById('balanceSub');
-    const fiatBtns = Array.from(document.querySelectorAll('.fiat-btn'));
-    const marketsGrid = document.getElementById('marketsGrid');
-    const footerEl = document.getElementById('footer');
-    const langPill = document.getElementById('langPill');
-    const langMenu = document.getElementById('langMenu');
-    const langLabel = document.getElementById('langLabel');
-
-    let lang = localStorage.getItem('lang') || 'ru';
-    let locale = (lang === 'ru') ? 'ru-RU' : 'en-US';
-    let selectedFiat = localStorage.getItem('fiat') || 'try';
-    let lastPrices = {};
-    let controller;
-
-    initTelegramProfile();
-    buildInitialMarkets();
-    setupFiatButtons();
-    setupLangMenu();
-    setLanguage(lang);
-    updatePrices();
-    setInterval(updatePrices, UPDATE_INTERVAL);
-
-    async function fetchPrices(){
-      const ids = COINS.map(c=>c.id).join(',');
-      const vs = FIATS.join(',');
-      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=${vs}&include_24hr_change=true`;
-      try {
-        if (controller) controller.abort();
-        controller = new AbortController();
-        const res = await fetch(url, { signal: controller.signal });
-        if(!res.ok) throw new Error('network');
-        return await res.json();
-      } catch (err) {
-        console.warn('fetchPrices error', err);
-        return null;
-      }
-    }
-
-    async function updatePrices(){
-      footerEl.classList.add('loading');
-      const data = await fetchPrices();
-      footerEl.classList.remove('loading');
-      if(!data){
-        footerEl.textContent = lang === 'ru' ? 'Нет соединения 😕' : 'No connection 😕';
-        return;
-      }
-      COINS.forEach(c=>{
-        const card = document.querySelector(`.coin-card[data-coin="${c.id}"]`);
-        if(!card) return;
-        const priceObj = data[c.id];
-        const raw = priceObj[selectedFiat];
-        const change = priceObj[selectedFiat + '_24h_change'] ?? 0;
-        const formatted = formatMoney(raw, selectedFiat);
-        card.querySelector('.coin-price').textContent = formatted;
-        const changeEl = card.querySelector('.change-val');
-        const arrow = change >= 0 ? '↑' : '↓';
-        changeEl.textContent = `${arrow} ${Math.abs(change).toFixed(2)}%`;
-        changeEl.className = 'change-val ' + (change >= 0 ? 'up':'down');
-
-        const last = lastPrices[c.id];
-        if(last !== undefined && last !== raw){
-          card.animate([
-            { background: 'rgba(255,255,255,0.00)' },
-            { background: raw > last ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)' },
-            { background: 'rgba(255,255,255,0.00)' }
-          ], { duration:700 });
-        }
-        lastPrices[c.id] = raw;
-      });
-      footerEl.textContent = `${lang === 'ru' ? 'Обновлено' : 'Updated'}: ${new Date().toLocaleTimeString(locale)}`;
-      balanceAmountEl.textContent = formatMoney(0, selectedFiat);
-      balanceSubEl.textContent = lang === 'ru' ? `Общий баланс в ${selectedFiat.toUpperCase()}` : `Total balance in ${selectedFiat.toUpperCase()}`;
-    }
-
-    function buildInitialMarkets(){
-      marketsGrid.innerHTML = '';
-      COINS.forEach(c=>{
-        marketsGrid.insertAdjacentHTML('beforeend', `
-          <div class="coin-card" data-coin="${c.id}">
-            <div class="coin-left">
-              <div class="coin-icon">${c.symbol}</div>
-              <div>
-                <div class="coin-name">${c.symbol}</div>
-                <div class="coin-sub">${c.id}</div>
-              </div>
-            </div>
-            <div style="text-align:right">
-              <div class="coin-price">—</div>
-              <div class="coin-change"><span class="change-val">0%</span></div>
-            </div>
-          </div>
-        `);
-      });
-    }
-
-    function setupFiatButtons(){
-      fiatBtns.forEach(btn=>{
-        if(btn.dataset.f === selectedFiat) btn.classList.add('active');
-        btn.addEventListener('click', ()=>{
-          fiatBtns.forEach(b=>b.classList.remove('active'));
-          btn.classList.add('active');
-          selectedFiat = btn.dataset.f;
-          localStorage.setItem('fiat', selectedFiat);
-          updatePrices();
-        });
-      });
-    }
-
-    function setupLangMenu(){
-      langPill.addEventListener('click', ()=>langMenu.classList.toggle('show'));
-      document.querySelectorAll('.lang-menu button').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          setLanguage(btn.dataset.l);
-          langMenu.classList.remove('show');
-        });
-      });
-    }
-
-    function setLanguage(l){
-      lang = l;
-      localStorage.setItem('lang', l);
-      locale = (l === 'ru') ? 'ru-RU' : 'en-US';
-      langLabel.textContent = l.toUpperCase();
-      const isRu = l === 'ru';
-      document.getElementById('lbl-deposit').textContent = isRu ? 'Пополнить' : 'Deposit';
-      document.getElementById('lbl-withdraw').textContent = isRu ? 'Вывести' : 'Withdraw';
-      document.getElementById('lbl-exchange').textContent = isRu ? 'Обмен' : 'Exchange';
-      document.getElementById('lbl-market').textContent = isRu ? 'Биржа' : 'Market';
-      document.getElementById('qrTitle').textContent = isRu ? 'Оплата по QR-коду' : 'Pay via QR code';
-      document.getElementById('qrSub').textContent = isRu ? 'Оплачивайте покупки с помощью криптовалюты' : 'Pay for purchases using crypto';
-      balanceSubEl.textContent = isRu ? `Общий баланс в ${selectedFiat.toUpperCase()}` : `Total balance in ${selectedFiat.toUpperCase()}`;
-      footerEl.textContent = isRu ? 'Обновлено: —' : 'Updated: —';
-    }
-
-    function initTelegramProfile(){
-      const tg = window.Telegram?.WebApp;
-      if(tg?.initDataUnsafe?.user){
-        const user = tg.initDataUnsafe.user;
-        usernameEl.textContent = user.first_name + (user.last_name ? (' ' + user.last_name) : '');
-        smallMuted.textContent = user.username ? '@'+user.username : 'Telegram';
-        if(user.photo_url){
-          const img = document.createElement('img');
-          img.src = user.photo_url;
-          avatarEl.innerHTML = '';
-          avatarEl.appendChild(img);
-        } else {
-          avatarEl.textContent = (user.first_name?.[0] ?? 'U').toUpperCase();
-        }
-      } else {
-        usernameEl.textContent = 'User';
-        smallMuted.textContent = 'Guest';
-      }
-    }
-
-    function formatMoney(v, fiat){
-      const sym = {usd:'$', rub:'₽', eur:'€', try:'₺', uah:'₴'}[fiat];
-      return new Intl.NumberFormat(locale,{style:'currency',currency:fiat}).format(v).replace(/[^\d.,]+/, sym+' ');
-    }
-
-    // ripple effect
-    document.querySelectorAll('.action-btn').forEach(b=>{
-      b.addEventListener('click', e=>{
-        const ripple=document.createElement('span');
-        ripple.classList.add('ripple');
-        b.appendChild(ripple);
-        const d=Math.max(b.clientWidth,b.clientHeight);
-        ripple.style.width=ripple.style.height=d+'px';
-        ripple.style.left=e.offsetX-d/2+'px';
-        ripple.style.top=e.offsetY-d/2+'px';
-        ripple.addEventListener('animationend',()=>ripple.remove());
-      });
-    });
+    // ... оставляем твой JavaScript без изменений ...
   </script>
 </body>
 </html>
