@@ -14,6 +14,13 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      overflow: hidden;
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .app {
@@ -26,10 +33,6 @@
       transition: transform 0.3s ease;
     }
 
-    .app:hover {
-      transform: translateY(-2px);
-    }
-
     .profile {
       display: flex;
       flex-direction: column;
@@ -38,23 +41,23 @@
     }
 
     .avatar {
-      width: 60px;
-      height: 60px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 24px;
+      font-size: 26px;
       color: white;
       font-weight: bold;
-      box-shadow: 0 0 12px rgba(79, 70, 229, 0.5);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
       margin-bottom: 10px;
       transition: transform 0.3s ease;
     }
 
     .avatar:hover {
-      transform: scale(1.05);
+      transform: scale(1.07);
     }
 
     .name {
@@ -154,7 +157,10 @@
     </div>
 
     <div class="footer-card">
-      <div class="footer-text">Оплата по QR-коду<br><small>Оплачивайте покупки с помощью криптовалюты</small></div>
+      <div class="footer-text">
+        Оплата по QR-коду<br>
+        <small>Оплачивайте покупки с помощью криптовалюты</small>
+      </div>
       <div class="footer-icon">➜</div>
     </div>
   </div>
