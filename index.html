@@ -6,9 +6,10 @@
   <title>SendingCrypto</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <style>
     body {
-      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+      background: linear-gradient(180deg, #18233d 0%, #253556 100%);
       color: white;
       font-family: "Inter", sans-serif;
       min-height: 100vh;
@@ -20,11 +21,11 @@
     }
 
     .glass {
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(30, 41, 59, 0.65);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.05);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
       border-radius: 1rem;
     }
 
@@ -46,28 +47,40 @@
     }
 
     .btn {
-      transition: all 0.15s ease;
+      transition: all 0.2s ease;
       transform: scale(1);
+      position: relative;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 1rem;
+      box-shadow: 0 0 8px rgba(168, 85, 247, 0);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .btn:hover::before {
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
     }
 
     .btn:active {
       transform: scale(0.95);
-      background-color: rgba(51, 65, 85, 0.8);
+      background-color: rgba(100, 44, 150, 0.2);
     }
   </style>
 </head>
 
 <body>
   <!-- Верхняя панель -->
-  <div id="header" class="glass w-full max-w-sm p-4 flex items-center justify-between gap-3 mt-3 fade-in">
-    <div class="flex items-center gap-3">
-      <img id="user-photo" src="https://via.placeholder.com/48" alt="avatar" class="w-12 h-12 rounded-full border border-gray-600" />
-      <div>
-        <h2 id="user-name" class="text-lg font-semibold">Гость</h2>
-        <p class="text-sm text-gray-400">Crypto Bot</p>
-      </div>
+  <div id="header" class="glass w-full max-w-sm p-4 flex items-center gap-3 mt-3 fade-in">
+    <img id="user-photo" src="https://via.placeholder.com/48" alt="avatar" class="w-12 h-12 rounded-full border border-gray-600" />
+    <div>
+      <h2 id="user-name" class="text-lg font-semibold">Гость</h2>
+      <p class="text-sm text-gray-400">Crypto Bot</p>
     </div>
-    <div class="text-gray-400 text-xl cursor-pointer">☰</div>
   </div>
 
   <!-- Баланс -->
@@ -80,7 +93,7 @@
   </div>
 
   <!-- Кнопки -->
-  <div class="grid grid-cols-4 gap-3 w-full max-w-sm mt-4 fade-in">
+  <div class="grid grid-cols-4 gap-3 w-full max-w-sm mt-5 fade-in">
     <button class="glass p-3 rounded-2xl btn" onclick="showAlert()">Пополнить</button>
     <button class="glass p-3 rounded-2xl btn" onclick="showAlert()">Вывести</button>
     <button class="glass p-3 rounded-2xl btn" onclick="showAlert()">Обмен</button>
@@ -88,19 +101,19 @@
   </div>
 
   <!-- QR -->
-  <div class="glass w-full max-w-sm p-4 mt-5 flex items-center justify-between fade-in">
+  <div class="glass w-full max-w-sm p-4 mt-6 flex items-center justify-between fade-in">
     <div>
       <h3 class="font-semibold text-sm">Оплата по QR-коду</h3>
       <p class="text-xs text-gray-400">Оплачивайте любые покупки с помощью криптовалюты</p>
     </div>
-    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-lg shadow-md">💳</div>
+    <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-lg shadow-md">💳</div>
   </div>
 
   <!-- Активы -->
-  <div class="w-full max-w-sm mt-5 fade-in">
+  <div class="w-full max-w-sm mt-6 fade-in">
     <div class="flex justify-between items-center mb-2">
       <h3 class="text-sm text-gray-400">Активы</h3>
-      <p class="text-sm text-blue-400 cursor-pointer">Скрыть мелкие балансы</p>
+      <p class="text-sm text-purple-400 cursor-pointer">Скрыть мелкие балансы</p>
     </div>
 
     <div id="assets"></div>
