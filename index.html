@@ -5,14 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SendingCrypto Bot</title>
 
-  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
     :root {
-      --bg: #14192a;
       --glass: rgba(23, 28, 46, 0.45);
       --border: rgba(255, 255, 255, 0.05);
       --glow: rgba(167, 139, 250, 0.5);
@@ -25,7 +22,6 @@
       color: white;
     }
 
-    /* --- Эффект мягкой подсветки под блоками --- */
     .glass {
       position: relative;
       background: var(--glass);
@@ -38,7 +34,6 @@
       overflow: hidden;
     }
 
-    /* подсветка снизу */
     .glass::before {
       content: "";
       position: absolute;
@@ -74,7 +69,6 @@
       box-shadow: 0 0 14px var(--glow);
     }
 
-    /* Fade animation */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -141,32 +135,28 @@
 
       <!-- Action Buttons -->
       <div class="grid grid-cols-4 gap-3 text-center fade">
-        <!-- Пополнить -->
-        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
+        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20" onclick="showToast()">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" d="M12 5v14M5 12h14" />
           </svg>
           <div class="text-xs">Пополнить</div>
         </button>
 
-        <!-- Вывести -->
-        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
+        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20" onclick="showToast()">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" d="M5 12h14" />
           </svg>
           <div class="text-xs">Вывести</div>
         </button>
 
-        <!-- Обмен -->
-        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
+        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20" onclick="showToast()">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16 3v5h5M8 21v-5H3M21 8l-5-5M3 16l5 5" />
           </svg>
           <div class="text-xs">Обмен</div>
         </button>
 
-        <!-- Биржа -->
-        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
+        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20" onclick="showToast()">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 17l4-4 4 4 8-8" />
           </svg>
@@ -174,14 +164,14 @@
         </button>
       </div>
 
-      <!-- QR -->
-      <div class="glass p-4 flex justify-between items-center btn-glow fade" onclick="showToast()">
+      <!-- QR Payment -->
+      <div class="glass p-4 flex justify-between items-center btn-glow fade cursor-pointer" onclick="showToast()">
         <div>
           <div class="text-sm font-semibold">Оплата по QR-коду</div>
           <div class="text-xs text-white/60">Оплачивайте покупки с помощью криптовалюты</div>
         </div>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M13 7l5 5-5 5M6 7h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white/70 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </div>
 
@@ -192,7 +182,6 @@
       </div>
 
       <div id="assets" class="space-y-3 fade"></div>
-
     </div>
   </main>
 
@@ -205,41 +194,66 @@
       setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
+    // Список активов, для которых будем получать цену
     const assets = [
       { id: 'tether', label: 'Tether', symbol: 'USDT' },
-      { id: 'toncoin', label: 'Toncoin', symbol: 'TON' },
-      { id: 'solana', label: 'Solana', symbol: 'SOL' },
+      { id: 'toncoin', label: 'Toncoin', symbol: 'TON' }
+      // можно добавить другие
     ];
+
+    // форматирование валюты
     const money = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
-    async function fetchPrices() {
-      const ids = assets.map(a => a.id).join(',');
-      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
-      const res = await fetch(url);
-      const data = await res.json();
+    // Функция для получения цены из Binance API
+    async function fetchPriceFromBinance(symbol) {
+      try {
+        // пример: для USDT–BTC, ты будешь запрашивать “BTCUSDT” (или подобный). Здесь symbol это “TONUSDT” или “USDTUSDT” и т.д.
+        const url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        // data.price — строка
+        return parseFloat(data.price);
+      } catch (e) {
+        console.error('Ошибка Binance API:', e);
+        return null;
+      }
+    }
+
+    async function updateAssetsDisplay() {
       const container = document.getElementById('assets');
       container.innerHTML = '';
-      assets.forEach(a => {
-        const info = data[a.id];
-        const price = info?.usd ?? 0;
-        const change = info?.usd_24h_change ?? 0;
+
+      for (let a of assets) {
+        // составим символ, например, “TONUSDT” (или “USDTUSDT”)
+        const pair = a.symbol + 'USDT';  // если символы в API Binance так работают
+        const price = await fetchPriceFromBinance(pair);
+
         const el = document.createElement('div');
         el.className = 'glass p-4 flex justify-between items-center rounded-2xl btn-glow';
+        let priceStr = '—';
+        if (price != null) {
+          priceStr = money(price);
+        }
         el.innerHTML = `
           <div>
             <div class="font-semibold">${a.label}</div>
-            <div class="text-xs text-white/60">${money(price)} <span class="${change >= 0 ? 'text-green-400' : 'text-red-400'}">${change.toFixed(2)}%</span></div>
+            <div class="text-xs text-white/60">${priceStr}</div>
           </div>
           <div class="text-right">
             <div class="text-sm font-medium">0 ${a.symbol}</div>
             <div class="text-xs text-white/60">$0</div>
-          </div>`;
+          </div>
+        `;
         container.appendChild(el);
-      });
+      }
     }
 
-    fetchPrices();
+    // При загрузке сразу показать цены, затем обновлять через N секунд
+    updateAssetsDisplay();
+    // Обновлять каждые, скажем, 30 секунд
+    setInterval(updateAssetsDisplay, 30000);
 
+    // Инициализация Telegram
     (function initTelegram(){
       const tg = window.Telegram?.WebApp;
       if (!tg) return;
@@ -253,4 +267,3 @@
 
 </body>
 </html>
-
