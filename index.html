@@ -1,448 +1,312 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>SendingCrypto — Mini WebApp</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#05060a;
-    --card:#0b1116;
-    --muted:#8f99a6;
-    --accent:#7c5cff;
-    --accent-2:#3ddbd9;
-    --glass: rgba(255,255,255,0.02);
-    --glass-2: rgba(255,255,255,0.03);
-    --radius:14px;
-  }
-  *{box-sizing:border-box}
-  html,body,#root{height:100%}
-  body{
-    margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-    background:linear-gradient(180deg,#041018 0%, #061228 100%);
-    color:#e6eef6; -webkit-font-smoothing:antialiased;
-    display:flex;align-items:center;justify-content:center;padding:12px;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SendingCrypto</title>
+  <style>
+    :root {
+      --bg: #0e0e10;
+      --card: #18181b;
+      --accent: #1d4ed8;
+      --text: #fff;
+      --text-secondary: #9ca3af;
+      --border: rgba(255,255,255,0.05);
+      --radius: 16px;
+      --transition: 0.2s ease;
+    }
 
-  /* App shell sized to container; inside is scrollable content to work well in Telegram iframe */
-  .app {
-    width:420px; max-width:100%; height:800px; max-height:calc(100vh - 24px);
-    border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.008));
-    box-shadow: 0 14px 40px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);
-    display:flex;flex-direction:column; overflow:hidden;
-  }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
 
-  /* internal scroll area */
-  .pane { padding:14px; overflow:auto; flex:1; }
-  @media (max-width:440px){ .app{ height:100vh; border-radius:0; } .pane{ padding:12px;} }
+    .container {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
 
-  .top {
-    display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px;
-  }
-  .profile { display:flex; align-items:center; gap:12px; min-width:0; }
-  .avatar {
-    width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:16px;flex-shrink:0; overflow:hidden;
-  }
-  .avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .user { min-width:0; }
-  .user .name { font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .user .nick { font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .profile-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
 
-  .lang {
-    display:flex; align-items:center; gap:8px; padding:6px; border-radius:999px; background:var(--glass);
-    font-size:12px; color:var(--muted); cursor:pointer; user-select:none;
-  }
-  .lang .dot { padding:4px 8px; background:rgba(255,255,255,0.012); border-radius:999px; font-weight:700; color:var(--accent); }
+    .profile-avatar {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+      border: 2px solid var(--accent);
+    }
 
-  /* balance card */
-  .balance-card {
-    display:flex; justify-content:space-between; gap:12px; align-items:center;
-    background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.008)); padding:12px; border-radius:12px;
-    border:1px solid rgba(255,255,255,0.02);
-  }
-  .balance-left { display:flex; flex-direction:column; gap:6px; min-width:0; }
-  .balance-left .title { font-size:12px; color:var(--muted); }
-  .balance-left .amount { font-weight:800; font-size:26px; display:flex; align-items:baseline; gap:8px; cursor:pointer; }
-  .balance-left .amount small { color:var(--muted); font-size:13px; font-weight:600; }
+    .username {
+      font-size: 18px;
+      font-weight: 600;
+    }
 
-  .balance-actions { display:flex; flex-direction:column; gap:8px; min-width:140px; }
-  .row { display:flex; gap:8px; }
-  .btn {
-    flex:1; padding:8px 10px; border-radius:10px; background:var(--glass); color:inherit; text-align:center; font-weight:700; font-size:13px;
-    border:1px solid rgba(255,255,255,0.02); cursor:pointer;
-  }
-  .btn.primary { background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#061018; border:none; box-shadow:0 8px 20px rgba(124,92,255,0.12); }
+    .balance {
+      margin-top: 8px;
+      font-size: 26px;
+      font-weight: 700;
+      cursor: pointer;
+    }
 
-  /* QR card separate */
-  .qr {
-    margin-top:12px; padding:12px; border-radius:12px; display:flex; align-items:center; justify-content:space-between;
-    background:linear-gradient(180deg, rgba(255,255,255,0.008), rgba(255,255,255,0.006)); border:1px solid rgba(255,255,255,0.02);
-    cursor:pointer;
-  }
-  .qr .left { display:flex; align-items:center; gap:12px; min-width:0; }
-  .qr img { width:40px; height:40px; border-radius:8px; }
-  .qr .t { font-weight:700; font-size:14px; }
-  .qr .s { color:var(--muted); font-size:12px; }
+    .balance-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
 
-  /* list */
-  .list { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
-  .item {
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding:10px; border-radius:10px; background:var(--glass); border:1px solid rgba(255,255,255,0.02);
-  }
-  .item-left { display:flex; align-items:center; gap:10px; min-width:0; }
-  .coin-icon { width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,0.02); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
-  .coin-icon img{ width:100%; height:100%; object-fit:contain; display:block; }
-  .coin-meta { display:flex; flex-direction:column; min-width:0; }
-  .coin-name { font-weight:700; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .coin-sub { font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .buttons-row {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
 
-  .item-right { text-align:right; min-width:120px; }
-  .price { font-weight:800; font-size:14px; }
-  .value { font-size:12px; color:var(--muted); margin-top:4px; }
+    .btn {
+      background: #232325;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 0;
+      font-size: 13px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
 
-  /* small footer */
-  .footer { text-align:center; font-size:12px; color:var(--muted); padding:8px 0; }
+    .btn:hover {
+      background: rgba(255,255,255,0.08);
+    }
 
-  /* skeleton / loading */
-  .skeleton { background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border-radius:6px; }
-  .skeleton.h-12{ height:12px; width:100%; }
-  .skeleton.h-18{ height:18px; width:120px; }
+    .qr-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: var(--transition);
+    }
 
-</style>
+    .qr-card:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .qr-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qr-left img {
+      width: 30px;
+      height: 30px;
+    }
+
+    .crypto-list {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .crypto-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .crypto-item:last-child {
+      border-bottom: none;
+    }
+
+    .crypto-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .crypto-left img {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+    }
+
+    .crypto-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .crypto-price {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .lang-switch {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 14px;
+      background: var(--card);
+      padding: 4px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+    }
+
+    @media (max-width: 420px) {
+      .profile-card, .qr-card, .crypto-list {padding: 16px;}
+      .balance {font-size: 22px;}
+    }
+  </style>
 </head>
 <body>
-  <div class="app" id="root">
-    <div class="pane" id="pane">
-      <div class="top">
-        <div class="profile">
-          <div class="avatar" id="avatar"><!-- injected --></div>
-          <div class="user">
-            <div class="name" id="uname">Guest</div>
-            <div class="nick" id="unick">@guest</div>
-          </div>
-        </div>
+  <div class="lang-switch" id="langSwitch">RU</div>
 
-        <div class="lang" id="langToggle" title="Switch language">
-          <div style="font-size:12px;color:var(--muted)"><span id="langLabel">RU</span></div>
-          <div class="dot" id="langDot">EN</div>
+  <div class="container">
+    <div class="profile-card">
+      <img id="avatar" src="" class="profile-avatar" alt="avatar">
+      <div id="username" class="username">User</div>
+      <div id="balance" class="balance" data-currency="USD">$0</div>
+      <div class="balance-sub" id="balanceSub">Общий баланс в USD</div>
+
+      <div class="buttons-row">
+        <div class="btn">Пополнить</div>
+        <div class="btn">Вывести</div>
+        <div class="btn">Обмен</div>
+        <div class="btn">Биржа</div>
+      </div>
+    </div>
+
+    <div class="qr-card">
+      <div class="qr-left">
+        <img src="https://cdn-icons-png.flaticon.com/512/8859/8859174.png" alt="qr">
+        <div>
+          <div style="font-weight:600;">Оплата по QR-коду</div>
+          <div style="font-size:12px;color:var(--text-secondary);">Оплачивайте покупки с помощью криптовалюты</div>
         </div>
       </div>
+      <div>→</div>
+    </div>
 
-      <div class="balance-card" role="region" aria-label="balance">
-        <div class="balance-left">
-          <div class="title" id="balanceTitle">Total balance</div>
-          <div class="amount" id="balanceAmount" title="Click to change display currency">
-            <div id="balanceSum">0.000000</div>
-            <small id="balanceCur">$</small>
-          </div>
-        </div>
-
-        <div class="balance-actions">
-          <div class="row">
-            <div class="btn" id="btnRefill">Refill</div>
-            <div class="btn" id="btnWithdraw">Withdraw</div>
-          </div>
-          <div class="row">
-            <div class="btn" id="btnSwap">Swap</div>
-            <div class="btn" id="btnMarket">Market</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="qr" id="qrCard" title="Pay by QR">
-        <div class="left">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/8/80/QRCode_Example.svg" alt="QR">
-          <div>
-            <div class="t" id="qrTitle">Pay by QR</div>
-            <div class="s" id="qrSub">Pay for purchases using crypto</div>
-          </div>
-        </div>
-        <div style="color:var(--muted); font-weight:700">→</div>
-      </div>
-
-      <div class="list" id="coinList">
-        <!-- coins injected here -->
-        <div class="item skeleton" style="height:64px"></div>
-        <div class="item skeleton" style="height:64px"></div>
-        <div class="item skeleton" style="height:64px"></div>
-      </div>
-
-      <div class="footer" id="footerNote">Loading prices...</div>
+    <div class="crypto-list" id="cryptoList">
+      <!-- динамический список -->
     </div>
   </div>
 
-<script>
-/* Robust single-file WebApp
-   - Telegram WebApp SDK usage (if available)
-   - CoinGecko for live prices
-   - Clean responsive layout, safe fallbacks
-*/
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-/* ---------- Config ---------- */
-const COINS = [
-  { id: "toncoin", symbol: "TON", name: "Toncoin" },
-  { id: "tether", symbol: "USDT", name: "Tether" },
-  { id: "solana", symbol: "SOL", name: "Solana" },
-  { id: "bitcoin", symbol: "BTC", name: "Bitcoin" },
-  { id: "litecoin", symbol: "LTC", name: "Litecoin" },
-  { id: "ethereum", symbol: "ETH", name: "Ethereum" }
-];
-
-// Holdings in each coin (demo). Display will show price * amount in selected fiat.
-const HOLDINGS = {
-  toncoin: 5.25,
-  tether: 100,
-  solana: 0.5,
-  bitcoin: 0.02,
-  litecoin: 1.5,
-  ethereum: 0.12
-};
-
-// Fiats to cycle through on balance click
-const FIATS = [
-  { code: "usd", symbol: "$", label_en: "USD", label_ru: "USDT" },
-  { code: "rub", symbol: "₽", label_en: "RUB", label_ru: "Рубли" },
-  { code: "eur", symbol: "€", label_en: "EUR", label_ru: "EUR" },
-  { code: "uah", symbol: "₴", label_en: "UAH", label_ru: "Гривны" },
-  { code: "try", symbol: "₺", label_en: "TRY", label_ru: "Лиры" }
-];
-
-const COINGECKO = "https://api.coingecko.com/api/v3";
-
-/* ---------- State ---------- */
-let LANG = "en"; // default: en; toggles to 'ru'
-let fiatIndex = 0;
-let latest = {}; // coin -> { usd, rub, eur, uah, try, usd_24h_change, image }
-let tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
-
-/* ---------- Elements ---------- */
-const avatarEl = document.getElementById("avatar");
-const unameEl = document.getElementById("uname");
-const unickEl = document.getElementById("unick");
-const langToggle = document.getElementById("langToggle");
-const langLabel = document.getElementById("langLabel");
-const langDot = document.getElementById("langDot");
-const balanceTitle = document.getElementById("balanceTitle");
-const balanceSum = document.getElementById("balanceSum");
-const balanceCur = document.getElementById("balanceCur");
-const coinList = document.getElementById("coinList");
-const footerNote = document.getElementById("footerNote");
-const qrCard = document.getElementById("qrCard");
-
-/* ---------- I18N ---------- */
-const STR = {
-  en: {
-    total: "Total balance",
-    refill: "Refill",
-    withdraw: "Withdraw",
-    swap: "Swap",
-    market: "Market",
-    qrTitle: "Pay by QR",
-    qrSub: "Pay for purchases using crypto",
-    loading: "Loading prices...",
-    exchangeError: "Failed to load prices"
-  },
-  ru: {
-    total: "Общий баланс",
-    refill: "Пополнить",
-    withdraw: "Вывести",
-    swap: "Обмен",
-    market: "Биржа",
-    qrTitle: "Оплата по QR-коду",
-    qrSub: "Оплачивайте покупки с помощью криптовалюты",
-    loading: "Загрузка курсов...",
-    exchangeError: "Ошибка загрузки курсов"
-  }
-};
-
-/* ---------- Helpers ---------- */
-function setLangUI() {
-  langLabel.textContent = LANG === "ru" ? "RU" : "EN";
-  langDot.textContent = LANG === "ru" ? "EN" : "RU";
-  balanceTitle.textContent = STR[LANG].total;
-  document.getElementById("btnRefill").textContent = STR[LANG].refill;
-  document.getElementById("btnWithdraw").textContent = STR[LANG].withdraw;
-  document.getElementById("btnSwap").textContent = STR[LANG].swap;
-  document.getElementById("btnMarket").textContent = STR[LANG].market;
-  document.getElementById("qrTitle").textContent = STR[LANG].qrTitle;
-  document.getElementById("qrSub").textContent = STR[LANG].qrSub;
-  footerNote.textContent = STR[LANG].loading;
-}
-
-function formatNumber(v, locale) {
-  if (v === null || v === undefined || isNaN(v)) return "—";
-  const abs = Math.abs(v);
-  const digits = abs < 1 ? 6 : (abs < 1000 ? 4 : 2);
-  return new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(v);
-}
-
-function formatCurrency(amount, fiatCode) {
-  const locale = LANG === "ru" ? "ru-RU" : "en-US";
-  const digits = Math.abs(amount) < 1 ? 6 : 2;
-  return new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(amount);
-}
-
-/* ---------- Telegram init (safe) ---------- */
-function initTelegram() {
-  if (!tg) {
-    // Not inside Telegram - mock a user for local testing
-    unameEl.textContent = "Yipir";
-    unickEl.textContent = "@yipir";
-    avatarEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#061018;background:linear-gradient(135deg,var(--accent),var(--accent-2));">Y</div>`;
-    return;
-  }
-  try {
-    // expand if available
-    tg.expand && tg.expand();
-    const user = tg.initDataUnsafe?.user || tg.initData?.user || null;
+    // Получаем данные пользователя
+    const user = tg.initDataUnsafe?.user;
     if (user) {
-      const name = (user.first_name || "") + (user.last_name ? " " + user.last_name : "");
-      unameEl.textContent = name || (user.username || "User");
-      unickEl.textContent = user.username ? ("@" + user.username) : ("id:" + (user.id || ""));
-      // Telegram SDK doesn't expose avatar URL; generate initials
-      const initials = ((user.first_name || "").charAt(0) + (user.last_name || "").charAt(0)).toUpperCase() || (user.username || "U").substr(0,2).toUpperCase();
-      avatarEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#061018;background:linear-gradient(135deg,var(--accent),var(--accent-2));">${initials}</div>`;
+      document.getElementById('username').innerText = user.first_name || 'User';
+      if (user.photo_url) document.getElementById('avatar').src = user.photo_url;
     } else {
-      // fallback
-      unameEl.textContent = "User";
-      unickEl.textContent = "@user";
-      avatarEl.textContent = "U";
+      document.getElementById('avatar').src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
     }
-  } catch (e) {
-    console.warn("Telegram init error", e);
-    unameEl.textContent = "User";
-    unickEl.textContent = "@user";
-  }
-}
 
-/* ---------- Data fetching ---------- */
-async function fetchPrices() {
-  try {
-    footerNote.textContent = STR[LANG].loading;
-    // ids query
-    const ids = COINS.map(c => c.id).join(",");
-    const vs = ["usd","rub","eur","uah","try"].join(",");
-    const url = `${COINGECKO}/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=${vs}&include_24hr_change=true`;
-    const r = await fetch(url, { cache: "no-cache" });
-    if (!r.ok) throw new Error("coingecko:" + r.status);
-    const data = await r.json();
-    // fetch images (one request per coin is limited but acceptable for this small list)
-    const imagePromises = COINS.map(async (c) => {
+    // Курсы крипты
+    const cryptoList = document.getElementById('cryptoList');
+    const coins = [
+      { id: 'the-open-network', symbol: 'TON', name: 'Toncoin', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/11419.png' },
+      { id: 'tether', symbol: 'USDT', name: 'Tether', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png' },
+      { id: 'solana', symbol: 'SOL', name: 'Solana', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png' },
+      { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png' },
+      { id: 'litecoin', symbol: 'LTC', name: 'Litecoin', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2.png' },
+      { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', img: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
+    ];
+
+    async function loadPrices() {
       try {
-        const rr = await fetch(`${COINGECKO}/coins/${encodeURIComponent(c.id)}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`);
-        if (!rr.ok) return null;
-        const dd = await rr.json();
-        return dd.image?.small || dd.image?.thumb || dd.image?.large || null;
-      } catch (e) { return null; }
+        const ids = coins.map(c => c.id).join(',');
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+        const data = await res.json();
+
+        cryptoList.innerHTML = '';
+        coins.forEach(c => {
+          const price = data[c.id]?.usd ? data[c.id].usd.toLocaleString() : '—';
+          const item = document.createElement('div');
+          item.className = 'crypto-item';
+          item.innerHTML = `
+            <div class="crypto-left">
+              <img src="${c.img}" alt="${c.symbol}">
+              <div class="crypto-name">${c.name} <span style="color:var(--text-secondary);font-size:12px;">${c.symbol}</span></div>
+            </div>
+            <div class="crypto-price">$${price}</div>
+          `;
+          cryptoList.appendChild(item);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    loadPrices();
+
+    // Смена языка
+    const langSwitch = document.getElementById('langSwitch');
+    let lang = 'RU';
+    langSwitch.addEventListener('click', () => {
+      lang = lang === 'RU' ? 'EN' : 'RU';
+      langSwitch.textContent = lang;
+      if (lang === 'EN') {
+        document.querySelector('.balance-sub').innerText = 'Total balance in USD';
+        document.querySelector('.btn:nth-child(1)').innerText = 'Refill';
+        document.querySelector('.btn:nth-child(2)').innerText = 'Withdraw';
+        document.querySelector('.btn:nth-child(3)').innerText = 'Swap';
+        document.querySelector('.btn:nth-child(4)').innerText = 'Market';
+        document.querySelector('.qr-left div div:nth-child(1)').innerText = 'Pay by QR';
+        document.querySelector('.qr-left div div:nth-child(2)').innerText = 'Pay for purchases using crypto';
+      } else {
+        document.querySelector('.balance-sub').innerText = 'Общий баланс в USD';
+        document.querySelector('.btn:nth-child(1)').innerText = 'Пополнить';
+        document.querySelector('.btn:nth-child(2)').innerText = 'Вывести';
+        document.querySelector('.btn:nth-child(3)').innerText = 'Обмен';
+        document.querySelector('.btn:nth-child(4)').innerText = 'Биржа';
+        document.querySelector('.qr-left div div:nth-child(1)').innerText = 'Оплата по QR-коду';
+        document.querySelector('.qr-left div div:nth-child(2)').innerText = 'Оплачивайте покупки с помощью криптовалюты';
+      }
     });
-    const images = await Promise.all(imagePromises);
 
-    COINS.forEach((c, idx) => {
-      latest[c.id] = {
-        ...data[c.id],
-        image: images[idx] || null
-      };
+    // Переключение валют
+    const balance = document.getElementById('balance');
+    const currencies = [
+      { symbol: '$', name: 'USD' },
+      { symbol: '₽', name: 'RUB' },
+      { symbol: '€', name: 'EUR' },
+      { symbol: '₴', name: 'UAH' },
+      { symbol: '₺', name: 'TRY' },
+    ];
+    let current = 0;
+
+    balance.addEventListener('click', () => {
+      current = (current + 1) % currencies.length;
+      const c = currencies[current];
+      balance.innerText = `${c.symbol}0`;
+      document.getElementById('balanceSub').innerText =
+        lang === 'EN' ? `Total balance in ${c.name}` : `Общий баланс в ${c.name}`;
     });
-    footerNote.textContent = ""; // clear
-    renderList();
-    updateBalance();
-  } catch (err) {
-    console.error("fetchPrices error", err);
-    footerNote.textContent = STR[LANG].exchangeError;
-  }
-}
-
-/* ---------- UI render ---------- */
-function renderList() {
-  coinList.innerHTML = "";
-  const locale = LANG === "ru" ? "ru-RU" : "en-US";
-
-  COINS.forEach(c => {
-    const d = latest[c.id] || {};
-    const price = d.usd || 0;
-    const change = d.usd_24h_change !== undefined ? d.usd_24h_change : null;
-    const img = d.image || '';
-    const amount = HOLDINGS[c.id] || 0;
-    const valueUSD = amount * (d.usd || 0);
-    // compute display price in selected fiat
-    const fiat = FIATS[fiatIndex];
-    const priceInFiat = (d[fiat.code] !== undefined) ? d[fiat.code] : (price * 1); // fallback
-    const valueInFiat = amount * priceInFiat;
-
-    const item = document.createElement("div");
-    item.className = "item";
-    item.innerHTML = `
-      <div class="item-left">
-        <div class="coin-icon">${img ? `<img src="${img}" alt="${c.name}">` : c.symbol}</div>
-        <div class="coin-meta">
-          <div class="coin-name">${c.name} <span style="font-weight:600;color:var(--muted);font-size:12px"> ${c.symbol}</span></div>
-          <div class="coin-sub">ID: ${c.id}</div>
-        </div>
-      </div>
-      <div class="item-right">
-        <div class="price">${FIATS[fiatIndex].symbol} ${formatCurrency(priceInFiat, fiat.code)}</div>
-        <div class="value">${formatNumber(amount, locale)} • ${FIATS[fiatIndex].symbol} ${formatCurrency(valueInFiat, fiat.code)}</div>
-      </div>
-    `;
-    coinList.appendChild(item);
-  });
-}
-
-/* ---------- Balance calculation ---------- */
-async function updateBalance() {
-  // compute total in selected fiat
-  const fiat = FIATS[fiatIndex];
-  let total = 0;
-  COINS.forEach(c => {
-    const d = latest[c.id] || {};
-    const price = (d[fiat.code] !== undefined) ? d[fiat.code] : (d.usd || 0);
-    const amount = HOLDINGS[c.id] || 0;
-    total += (price * amount);
-  });
-  balanceSum.textContent = formatCurrency(total, fiat.code);
-  balanceCur.textContent = fiat.symbol;
-}
-
-/* ---------- Events ---------- */
-document.getElementById("balanceAmount").addEventListener("click", async () => {
-  fiatIndex = (fiatIndex + 1) % FIATS.length;
-  await updateBalance();
-  renderList();
-});
-
-langToggle.addEventListener("click", () => {
-  LANG = LANG === "ru" ? "en" : "ru";
-  setLangUI();
-  renderList();
-  updateBalance();
-});
-
-document.getElementById("btnRefill").addEventListener("click", () => { alert(LANG === "ru" ? "Функция Пополнить (демо)" : "Refill (demo)"); });
-document.getElementById("btnWithdraw").addEventListener("click", () => { alert(LANG === "ru" ? "Функция Вывести (демо)" : "Withdraw (demo)"); });
-document.getElementById("btnSwap").addEventListener("click", () => { alert(LANG === "ru" ? "Функция Обмен (демо)" : "Swap (demo)"); });
-document.getElementById("btnMarket").addEventListener("click", () => { alert(LANG === "ru" ? "Биржа (демо)" : "Market (demo)"); });
-
-qrCard.addEventListener("click", () => {
-  // placeholder: in production you'd open QR modal or create qr image
-  alert(LANG === "ru" ? "Открыть оплату по QR (демо)" : "Open QR payment (demo)");
-});
-
-/* ---------- Init ---------- */
-async function init() {
-  initTelegram();
-  setLangUI();
-  // initial skeleton shown; then fetch
-  await fetchPrices();
-  // refresh every 45s but don't pile up if user navigates
-  setInterval(fetchPrices, 45000);
-}
-
-// start
-init();
-
-</script>
+  </script>
 </body>
 </html>
