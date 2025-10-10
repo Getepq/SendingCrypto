@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kaito Shop — Bot Connection Guide</title>
+  <title>Kaito Shop вЂ” Bot Connection Guide</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
@@ -62,7 +62,7 @@
   </style>
 </head>
 <body>
-  <button id="langBtn">🇷🇺 RU</button>
+  <button id="langBtn">рџ‡·рџ‡є RU</button>
 
   <div class="box">
     <h1 id="title"></h1>
@@ -82,24 +82,24 @@
       en: {
         title: "How to Connect Telegram for Business",
         steps: [
-          "⚙️ Open Telegram Settings",
-          "💼 Go to Telegram for Business",
-          "🤖 Choose Chat-bots and add this bot to your business account",
-          "✅ Return to the bot and press “Connected the bot”"
+          "вљ™пёЏ Open Telegram Settings",
+          "рџ’ј Go to Telegram for Business",
+          "рџ¤– Choose Chat-bots and add this bot to your business account",
+          "вњ… Return to the bot and press вЂњConnected the botвЂќ"
         ],
         done: "I've Connected the Bot",
-        langBtn: "🇬🇧 EN"
+        langBtn: "рџ‡¬рџ‡§ EN"
       },
       ru: {
-        title: "Как подключить Telegram для бизнеса",
+        title: "РљР°Рє РїРѕРґРєР»СЋС‡РёС‚СЊ Telegram РґР»СЏ Р±РёР·РЅРµСЃР°",
         steps: [
-          "⚙️ Откройте Настройки Telegram",
-          "💼 Перейдите в Telegram для бизнеса",
-          "🤖 Выберите Чат-боты и добавьте этого бота в бизнес-аккаунт",
-          "✅ Вернитесь к боту и нажмите «Подключил бота»"
+          "вљ™пёЏ РћС‚РєСЂРѕР№С‚Рµ РќР°СЃС‚СЂРѕР№РєРё Telegram",
+          "рџ’ј РџРµСЂРµР№РґРёС‚Рµ РІ Telegram РґР»СЏ Р±РёР·РЅРµСЃР°",
+          "рџ¤– Р’С‹Р±РµСЂРёС‚Рµ Р§Р°С‚-Р±РѕС‚С‹ Рё РґРѕР±Р°РІСЊС‚Рµ СЌС‚РѕРіРѕ Р±РѕС‚Р° РІ Р±РёР·РЅРµСЃ-Р°РєРєР°СѓРЅС‚",
+          "вњ… Р’РµСЂРЅРёС‚РµСЃСЊ Рє Р±РѕС‚Сѓ Рё РЅР°Р¶РјРёС‚Рµ В«РџРѕРґРєР»СЋС‡РёР» Р±РѕС‚Р°В»"
         ],
-        done: "✅ Я подключил(а) бота",
-        langBtn: "🇷🇺 RU"
+        done: "вњ… РЇ РїРѕРґРєР»СЋС‡РёР»(Р°) Р±РѕС‚Р°",
+        langBtn: "рџ‡·рџ‡є RU"
       }
     };
 
@@ -111,7 +111,7 @@
         .join("");
       document.getElementById("doneBtn").innerText = t.done;
       document.getElementById("langBtn").innerText =
-        currentLang === "ru" ? "🇬🇧 EN" : "🇷🇺 RU";
+        currentLang === "ru" ? "рџ‡¬рџ‡§ EN" : "рџ‡·рџ‡є RU";
     }
 
     document.getElementById("langBtn").addEventListener("click", () => {
