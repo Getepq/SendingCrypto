@@ -3,232 +3,471 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SendingCrypto Bot</title>
+  <title>SendingCrypto Wallet</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Telegram SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- TON Connect UI -->
+
+  <!-- TON Connect UI (официальный CDN) -->
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
+  <!-- Telegram (опционально, если открыт внутри Telegram WebApp) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <style>
-    :root {
-      --bg: #14192a;
-      --glass: rgba(23, 28, 46, 0.45);
-      --border: rgba(255, 255, 255, 0.05);
-      --glow: rgba(167, 139, 250, 0.5);
+    :root{
+      --bg:#14192a;
+      --glass:rgba(23,28,46,0.45);
+      --border:rgba(255,255,255,0.05);
+      --glow:rgba(167,139,250,0.5);
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,var(--bg),#1b2236);
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:#fff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow-x:hidden;
     }
 
-    body {
-      background: linear-gradient(180deg, #14192a 0%, #1b2236 100%);
-      min-height: 100vh;
-      font-family: 'Inter', sans-serif;
-      color: white;
+    /* glass base */
+    .glass{
+      position:relative;
+      background:var(--glass);
+      backdrop-filter:blur(14px) saturate(140%);
+      -webkit-backdrop-filter:blur(14px) saturate(140%);
+      border:1px solid var(--border);
+      border-radius:1rem;
+      box-shadow:0 6px 20px rgba(0,0,0,0.3);
+      transition:all .28s ease;
+      overflow:hidden;
+    }
+    .glass::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      background:radial-gradient(circle at bottom, rgba(167,139,250,0.25) 0%, rgba(167,139,250,0.05) 40%, transparent 80%);
+      opacity:.36;
+      z-index:0;
+      transition:opacity .28s ease, transform .28s ease;
+    }
+    .glass:hover::before{ opacity:.9; transform:scale(1.03) }
+    .glass>*{position:relative; z-index:1}
+
+    .btn-glow{ transition:all .22s ease }
+    .btn-glow:hover{ transform:translateY(-3px); box-shadow:0 0 16px var(--glow) }
+
+    /* modal (bottom half) */
+    .modal-bg{
+      position:fixed; inset:0;
+      display:flex; align-items:flex-end; justify-content:center;
+      background:rgba(0,0,0,0.35);
+      backdrop-filter:blur(6px);
+      z-index:1200;
+      opacity:0; pointer-events:none;
+      transition:opacity .25s ease;
+    }
+    .modal-bg.show{ opacity:1; pointer-events:auto }
+
+    .modal-sheet{
+      width:100%;
+      max-width:600px;
+      border-radius:1rem 1rem 0 0;
+      margin:0 12px 12px 12px;
+      padding:18px;
+      box-shadow:0 -10px 40px rgba(0,0,0,0.45);
+      transform:translateY(12px);
+      animation:slideUp .36s cubic-bezier(.2,.9,.22,1) forwards;
+    }
+    @keyframes slideUp { from{ transform:translateY(100%) } to{ transform:translateY(0) } }
+
+    /* success overlay (check animation) */
+    .success-overlay{
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      z-index:1400; pointer-events:none;
+    }
+    .success-badge{
+      width:140px; height:140px; border-radius:20px; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(180deg, rgba(34,197,94,0.12), rgba(34,197,94,0.08));
+      border:1px solid rgba(34,197,94,0.18);
+      box-shadow:0 12px 40px rgba(16,185,129,0.12);
+      transform:scale(.6); opacity:0;
+      transition:transform .36s cubic-bezier(.2,.9,.22,1), opacity .28s ease;
+    }
+    .success-badge.show{ transform:scale(1); opacity:1 }
+
+    .checkmark{
+      width:72px; height:72px;
     }
 
-    .glass {
-      position: relative;
-      background: var(--glass);
-      backdrop-filter: blur(14px) saturate(140%);
-      border: 1px solid var(--border);
-      border-radius: 1rem;
-      transition: all 0.3s ease;
-    }
+    /* layout */
+    main{ min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:18px 12px 40px; }
+    .container{ width:100%; max-width:380px; margin:0 auto; display:block }
 
-    .glass::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background: radial-gradient(circle at bottom, rgba(167, 139, 250, 0.25) 0%, transparent 80%);
-      opacity: 0.4;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
+    .fade{ animation:fadeIn .36s ease both }
+    @keyframes fadeIn{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:translateY(0) } }
 
-    .glass:hover::before {
-      opacity: 0.8;
-      transform: scale(1.05);
-    }
+    /* small helpers */
+    .muted{ color:rgba(255,255,255,0.6) }
+    .right{ text-align:right }
+    .hidden{ display:none !important }
 
-    .btn-glow {
-      transition: all 0.3s ease;
+    /* responsive tweak for single-hand modal height */
+    @media (max-height:700px){
+      .modal-sheet{ padding:14px }
     }
-
-    .btn-glow:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 14px var(--glow);
-    }
-
-    /* --- Модалка подключения TON --- */
-    #connect-modal {
-      position: fixed;
-      bottom: -100%;
-      left: 0;
-      width: 100%;
-      background: rgba(20, 25, 42, 0.85);
-      backdrop-filter: blur(16px);
-      border-top-left-radius: 20px;
-      border-top-right-radius: 20px;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
-      transition: bottom 0.4s ease;
-      z-index: 50;
-      padding: 20px;
-    }
-
-    #connect-modal.show {
-      bottom: 0;
-    }
-
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(55,65,81,0.85);
-      color: #fff;
-      padding: 10px 18px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(168,85,247,0.3);
-      font-size: 14px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-
-    #toast.show {
-      opacity: 1;
-    }
-
   </style>
 </head>
-<body class="antialiased text-white">
+<body>
 
-  <!-- Модалка подключения TON -->
-  <div id="connect-modal" class="text-center">
-    <button id="close-modal" class="absolute top-2 right-4 text-gray-300 text-xl">×</button>
-    <div class="mt-6">
-      <img src="https://cryptologos.cc/logos/toncoin-ton-logo.svg" class="mx-auto w-14 h-14 mb-3">
-      <h2 class="text-lg font-bold">Подключить TON кошелёк</h2>
-      <p class="text-sm text-gray-400 mt-1 mb-4">
-        Подключив кошелёк, вы сможете использовать TON-адрес для переводов и авторизации.
-      </p>
-      <button id="connect-ton" class="bg-purple-600 hover:bg-purple-700 text-white w-full py-2 rounded-xl mb-2 transition">
-        Подключить TON кошелёк
-      </button>
-      <button id="skip-connect" class="text-gray-400 text-sm underline">Пропустить</button>
+  <!-- audio (use your catbox URL) -->
+  <audio id="success-audio" src="https://files.catbox.moe/yogz7u.mp3" preload="auto"></audio>
+
+  <!-- TON connect modal (bottom sheet) -->
+  <div id="wallet-modal" class="modal-bg" aria-hidden="true">
+    <div class="modal-sheet glass">
+      <button id="close-modal" style="position:absolute;right:12px;top:8px;border:0;background:transparent;color:rgba(255,255,255,0.7);font-size:22px;line-height:1;cursor:pointer">×</button>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:6px">
+        <img src="https://ton.org/download/ton_symbol.svg" alt="TON" style="width:56px;height:56px"/>
+        <h3 style="margin:0;font-size:18px;font-weight:600">Подключить TON кошелёк</h3>
+        <p class="muted" style="text-align:center;margin:0 8px;font-size:13px">Подключив кошелёк, вы сможете использовать TON-адрес для переводов и авторизации. Можно пропустить.</p>
+
+        <div style="width:100%;margin-top:10px;display:flex;gap:8px;align-items:center">
+          <button id="connect-ton" class="btn-glow" style="flex:1;padding:12px;border-radius:12px;border:0;background:linear-gradient(180deg,#7c3aed,#6d28d9);color:white;font-weight:600;cursor:pointer">
+            Подключить TON кошелёк
+          </button>
+        </div>
+
+        <button id="skip-and-close" style="margin-top:8px;background:transparent;border:0;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer">Пропустить</button>
+      </div>
     </div>
   </div>
 
-  <!-- Основное содержимое -->
-  <main id="main" class="min-h-screen flex justify-center p-4 hidden">
-    <div class="w-full max-w-sm space-y-5">
-      <div class="glass p-4 flex items-center gap-3">
-        <img src="https://via.placeholder.com/80" class="w-12 h-12 rounded-full border border-white/10 object-cover">
-        <div class="flex-1">
-          <div class="text-sm font-semibold">Пользователь</div>
+  <!-- success overlay -->
+  <div id="success-overlay" class="success-overlay hidden" aria-hidden="true">
+    <div id="success-badge" class="success-badge">
+      <svg class="checkmark" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="26" cy="26" r="25" stroke="rgba(34,197,94,0.9)" stroke-width="2.4" fill="rgba(34,197,94,0.06)"/>
+        <path d="M15 27 L22 33 L37 18" stroke="rgba(34,197,94,1)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- main content (hidden until modal closed or connected) -->
+  <main id="main" class="hidden">
+    <div class="container">
+      <!-- Top Card -->
+      <div class="glass p-4 fade" style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <img id="user-photo" src="https://via.placeholder.com/80" alt="avatar" style="width:48px;height:48px;border-radius:999px;border:1px solid rgba(255,255,255,0.06);object-fit:cover">
+        <div style="flex:1;min-width:0">
+          <div id="user-name" style="font-weight:600;font-size:14px">Гость</div>
         </div>
-        <button class="p-2 rounded-full bg-white/5 hover:bg-white/10 btn-glow">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </button>
       </div>
 
-      <div class="glass text-center py-6">
-        <div class="flex justify-center items-center gap-3">
-          <div id="balance-amount" class="text-3xl font-extrabold">$0</div>
-          <button id="toggle-balance" class="p-2 rounded-full bg-white/5 hover:bg-white/10 btn-glow">
-            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.3"/>
-              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.3"/>
-            </svg>
-          </button>
+      <!-- Balance (click to cycle currencies) -->
+      <div class="glass text-center p-6 fade" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+          <div id="balance-amount" style="font-size:28px;font-weight:800;cursor:pointer">$0</div>
         </div>
-        <div class="text-xs text-white/60 mt-2">Общий баланс в USD</div>
+        <div class="muted" style="margin-top:8px;font-size:12px">Общий баланс (нажмите, чтобы сменить валюту)</div>
       </div>
 
-      <div class="text-sm text-white/60 flex justify-between fade">
-        <span>Активы</span>
-        <span class="text-sky-400 cursor-pointer">Скрыть мелкие балансы</span>
+      <!-- Assets header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="muted">Активы</div>
+        <div style="color:rgb(96,165,250);font-size:13px;cursor:pointer" onclick="showToast('Скрыть мелкие балансы — пока заглушка')">Скрыть мелкие балансы</div>
       </div>
-      <div id="assets" class="space-y-3 fade"></div>
+
+      <!-- assets list -->
+      <div id="assets" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
   </main>
 
-  <div id="toast">Функция скоро будет доступна 🚀</div>
+  <!-- toast -->
+  <div id="toast" style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:rgba(0,0,0,0.6);padding:10px 14px;border-radius:10px;color:#fff;z-index:2000;opacity:0;transition:opacity .3s">...</div>
 
-  <audio id="success-sound" src="https://files.catbox.moe/yogz7u.mp3" preload="auto"></audio>
+<script>
+/* ---------------------------
+  Helpers: show toast
+--------------------------- */
+function showToast(text='Готово') {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.style.opacity = '1';
+  setTimeout(()=> t.style.opacity='0', 2200);
+}
 
-  <script>
-    const modal = document.getElementById('connect-modal');
-    const closeModal = document.getElementById('close-modal');
-    const skipBtn = document.getElementById('skip-connect');
-    const connectBtn = document.getElementById('connect-ton');
-    const mainEl = document.getElementById('main');
-    const successSound = document.getElementById('success-sound');
+/* ---------------------------
+  Modal / TON Connect flow
+--------------------------- */
+const modalBg = document.getElementById('wallet-modal');
+const connectBtn = document.getElementById('connect-ton');
+const closeBtn = document.getElementById('close-modal');
+const skipBtn = document.getElementById('skip-and-close');
+const mainEl = document.getElementById('main');
+const successOverlay = document.getElementById('success-overlay');
+const successBadge = document.getElementById('success-badge');
+const audioEl = document.getElementById('success-audio');
 
-    // Инициализация TON Connect
-    let tonConnectUI;
+// Assets & balance placeholders (will fetch Binance later)
+const assetsList = [
+  {symbol:'BTCUSDT', label:'Bitcoin', short:'BTC'},
+  {symbol:'ETHUSDT', label:'Ethereum', short:'ETH'},
+  {symbol:'LTCUSDT', label:'Litecoin', short:'LTC'},
+  {symbol:'SOLUSDT', label:'Solana', short:'SOL'},
+  {symbol:'TONUSDT', label:'Toncoin', short:'TON'},
+];
 
-    async function initTonConnectUI() {
-      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: "https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json",
+// show main content
+function showMain() {
+  modalBg.classList.remove('show');
+  mainEl.classList.remove('hidden');
+  fetchBinanceAndRender();
+  updateBalanceDisplay(); // initial balance render
+}
+
+/* check localStorage */
+const TON_CONNECTED_KEY = 'ton_connected_v1';
+
+// We'll initialize TonConnectUI lazy when user clicks connect
+let tonConnectUI = null;
+
+// On load: show modal only if not connected
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    const connected = localStorage.getItem(TON_CONNECTED_KEY);
+    if (!connected) {
+      // ensure modal is visible
+      modalBg.classList.add('show');
+    } else {
+      // already connected — show main directly
+      showMain();
+    }
+  } catch(e){
+    console.warn('localStorage not available', e);
+    modalBg.classList.add('show');
+  }
+});
+
+// Close modal (skip)
+closeBtn.addEventListener('click', () => {
+  modalBg.classList.remove('show');
+  showMain();
+});
+skipBtn.addEventListener('click', () => {
+  modalBg.classList.remove('show');
+  showMain();
+});
+
+/* Connect TON: real integration via TonConnectUI
+   We'll instantiate TonConnectUI from the included UMD global TON_CONNECT_UI.TonConnectUI
+   and listen for onStatusChange to detect successful connection.
+*/
+async function initTonConnectUI() {
+  if (tonConnectUI) return tonConnectUI;
+
+  // Determine manifestUrl — recommended by TON docs.
+  // If you host a manifest file, put its URL here. If not available, still try without it (the UI may fallback).
+  const manifestUrl = (location.origin !== 'null') ? `${location.origin}/tonconnect-manifest.json` : null;
+
+  try {
+    if (window.TON_CONNECT_UI && window.TON_CONNECT_UI.TonConnectUI) {
+      tonConnectUI = new window.TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: manifestUrl,
+        buttonRootId: null, // we will open modal programmatically
+        enableAndroidBackHandler: false
       });
 
+      // restore any existing session (promise resolves after status restored)
+      try { await tonConnectUI.connectionRestored; } catch(e){ /* ignore */ }
+
+      // subscribe to status changes
       tonConnectUI.onStatusChange(wallet => {
-        if (wallet) {
-          localStorage.setItem('tonConnected', 'true');
-          modal.classList.remove('show');
-          mainEl.classList.remove('hidden');
-          successSound.play();
-          if (navigator.vibrate) navigator.vibrate(150);
-          showToast('✅ Кошелёк подключён!');
+        // wallet will be null/undefined or object when connected (see docs)
+        if (wallet && (wallet.account || wallet.connectItems)) {
+          // consider this a successful connection
+          handleSuccessfulConnect(wallet);
         }
       });
 
       return tonConnectUI;
+    } else {
+      console.warn('TON_CONNECT_UI is not available (script might not be loaded)');
+      return null;
+    }
+  } catch (e) {
+    console.error('Failed init TonConnectUI', e);
+    return null;
+  }
+}
+
+// Called when user clicks connect
+connectBtn.addEventListener('click', async () => {
+  // instantiate UI
+  const ui = await initTonConnectUI();
+
+  if (ui) {
+    try {
+      // open modal (user chooses wallet)
+      await ui.openModal();
+      // actual connection will be detected in onStatusChange -> handleSuccessfulConnect
+    } catch (e) {
+      console.error('Error opening TonConnect modal', e);
+      showToast('Ошибка при попытке подключить кошелёк');
+    }
+  } else {
+    // fallback: if TonConnect UI isn't available for some reason, emulate or try TonConnect SDK
+    // We'll fallback to "emulated" connect so developer can test the UX.
+    emulateSuccessfulConnect();
+  }
+});
+
+/* When TonConnect reports connection (or when we emulate), call this */
+async function handleSuccessfulConnect(walletInfo) {
+  try {
+    // Prevent double handling
+    if (localStorage.getItem(TON_CONNECTED_KEY) === 'true') {
+      // already handled before
+      modalBg.classList.remove('show');
+      showMain();
+      return;
     }
 
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
-    }
+    // save status
+    localStorage.setItem(TON_CONNECTED_KEY, 'true');
 
-    function hideModalAndShowMain() {
-      modal.classList.remove('show');
-      setTimeout(() => {
-        mainEl.classList.remove('hidden');
-      }, 150);
-    }
-
-    closeModal.addEventListener('click', hideModalAndShowMain);
-    skipBtn.addEventListener('click', hideModalAndShowMain);
-
-    connectBtn.addEventListener('click', async () => {
-      modal.classList.remove('show');
-      const ui = await initTonConnectUI();
-      try {
-        await ui.openModal();
-      } catch (e) {
-        console.error('Ошибка TON Connect:', e);
-        showToast('Ошибка подключения');
-        hideModalAndShowMain();
+    // play sound (if allowed)
+    try {
+      audioEl.currentTime = 0;
+      const playPromise = audioEl.play();
+      if (playPromise !== undefined) {
+        await playPromise.catch(err => {
+          // autoplay might be blocked — ignore
+          console.warn('Audio play blocked', err);
+        });
       }
-    });
+    } catch (e) { console.warn('Audio error', e); }
 
-    window.addEventListener('load', async () => {
-      const connected = localStorage.getItem('tonConnected');
-      if (!connected) {
-        setTimeout(() => modal.classList.add('show'), 300);
-      } else {
-        mainEl.classList.remove('hidden');
-        await initTonConnectUI();
-      }
-    });
-  </script>
+    // vibrate if supported
+    if (navigator.vibrate) {
+      try { navigator.vibrate([120]); } catch (e) { /* ignore */ }
+    }
+
+    // show check animation
+    successOverlay.classList.remove('hidden');
+    setTimeout(()=> successBadge.classList.add('show'), 40);
+
+    // short delay then hide and show main
+    setTimeout(()=>{
+      successBadge.classList.remove('show');
+      successOverlay.classList.add('hidden');
+      modalBg.classList.remove('show');
+      showMain();
+      showToast('Кошелёк подключён');
+    }, 1400);
+  } catch (err) {
+    console.error('handleSuccessfulConnect error', err);
+  }
+}
+
+/* Emulation (developer/testing only) */
+function emulateSuccessfulConnect(){
+  // emulate network delay
+  setTimeout(()=> {
+    handleSuccessfulConnect({ emulated:true });
+  }, 700);
+}
+
+/* ---------------------------
+  Binance prices and assets rendering
+--------------------------- */
+async function fetchBinanceAndRender(){
+  const container = document.getElementById('assets');
+  container.innerHTML = '';
+  for (const a of assetsList) {
+    try {
+      const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${a.symbol}`);
+      const data = await res.json();
+      const last = parseFloat(data.lastPrice || 0);
+      const change = parseFloat(data.priceChangePercent || 0);
+
+      const item = document.createElement('div');
+      item.className = 'glass';
+      item.style.padding = '12px';
+      item.style.borderRadius = '12px';
+      item.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:600">${a.label}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.65)">$${last.toFixed(2)} <span style="margin-left:6px;color:${change>=0?'#4ade80':'#fb7185'}">${change.toFixed(2)}%</span></div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:600">0 ${a.short}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6)">$0</div>
+          </div>
+        </div>
+      `;
+      container.appendChild(item);
+    } catch (e) {
+      console.warn('Binance fetch failed for', a.symbol, e);
+    }
+  }
+}
+
+/* ---------------------------
+  Balance display & currency cycling
+--------------------------- */
+const balanceEl = document.getElementById('balance-amount');
+const currencies = ['USD','BTC','ETH','TON','SOL','LTC'];
+let currentCurrencyIndex = 0;
+// Sample USD balance — in real app you'd compute based on holdings
+let balanceUSD = 1234.56;
+
+balanceEl.addEventListener('click', async () => {
+  currentCurrencyIndex = (currentCurrencyIndex + 1) % currencies.length;
+  await updateBalanceDisplay();
+});
+
+async function updateBalanceDisplay(){
+  const currency = currencies[currentCurrencyIndex];
+  if (currency === 'USD') {
+    balanceEl.textContent = `$${balanceUSD.toFixed(2)}`;
+    return;
+  }
+  try {
+    // For Binance pairs: e.g., BTCUSDT, ETHUSDT, TONUSDT...
+    const pair = currency + 'USDT';
+    const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${pair}`);
+    const data = await res.json();
+    const rate = parseFloat(data.price || 0);
+    if (!rate || isNaN(rate) || rate === 0) {
+      balanceEl.textContent = `$${balanceUSD.toFixed(2)}`;
+      return;
+    }
+    const converted = (balanceUSD / rate);
+    // show with sensible decimals
+    const decimals = converted < 1 ? 6 : 4;
+    balanceEl.textContent = `${converted.toFixed(decimals)} ${currency}`;
+  } catch (e) {
+    console.warn('Balance convert failed', e);
+    balanceEl.textContent = `$${balanceUSD.toFixed(2)}`;
+  }
+}
+
+/* ---------------------------
+  Expose a safe global for debugging (optional)
+--------------------------- */
+window.__APP = {
+  showModal: () => modalBg.classList.add('show'),
+  hideModal: () => modalBg.classList.remove('show'),
+  emulateConnect: emulateSuccessfulConnect
+};
+
+</script>
 
 </body>
 </html>
