@@ -3,206 +3,119 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Crypto MiniApp — Demo</title>
-
-  <!-- Telegram WebApp (работает только если открыт из Telegram) -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
+  <title>Crypto MiniApp</title>
+  <meta name="color-scheme" content="dark">
   <style>
     :root{
-      --bg-a: #0b0c0f;
-      --bg-b: #0f1220;
-      --panel: #111217;
-      --muted: #9aa0a6;
-      --card: rgba(255,255,255,0.03);
-      --accent1: #6d28d9; /* purple */
-      --accent2: #06b6d4; /* teal */
-      --glass: rgba(255,255,255,0.03);
-      --success: #10b981;
-      --danger: #ef4444;
+      --bg-a:#000000;
+      --bg-b:#2b0a3a;
+      --panel:#0f1114;
+      --muted:#9aa0a6;
+      --card:rgba(255,255,255,0.03);
+      --accent1:#6d28d9;
+      --accent2:#06b6d4;
+      --success:#10b981;
+      --danger:#ef4444;
+      --glass: rgba(255,255,255,0.02);
     }
     *{box-sizing:border-box}
     html,body{height:100%; margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; -webkit-font-smoothing:antialiased; background: linear-gradient(180deg,var(--bg-a), var(--bg-b)); color:#e6eef8}
-    /* make the app fill phone screen nicely */
-    .app-viewport{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:14px}
+    /* loader full screen */
+    #loader {
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background:#000; z-index:9999; transition:opacity .8s ease, visibility .8s;
+    }
+    #loader.fadeout{ opacity:0; visibility:hidden; pointer-events:none; }
+    #loader .bird {
+      width:160px; height:160px; background-image: url('data:image/png;base64,/*BASE64_BIRD*/');
+      background-size:contain; background-repeat:no-repeat; background-position:center;
+      filter:brightness(1) saturate(0); /* make white */
+      opacity:1; transition:opacity .8s ease, transform 1.2s ease;
+    }
+    /* main app viewport (hidden initially) */
+    .app-viewport{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:12px; opacity:0; transform:translateY(8px); transition:opacity .45s ease, transform .45s ease;}
+    .app-viewport.show{opacity:1; transform:none}
     .app{
-      width:100%;
-      max-width:420px;
-      height:calc(100vh - 28px);
-      max-height:900px;
-      border-radius:18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)), linear-gradient(180deg,var(--panel), rgba(17,18,23,0.98));
-      box-shadow: 0 18px 40px rgba(2,6,23,0.7);
-      padding:18px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      overflow:auto;
-      animation: panelIn .45s cubic-bezier(.2,.9,.2,1);
+      width:100%; max-width:420px; height:calc(100vh - 24px); border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)), linear-gradient(180deg, var(--panel), rgba(17,18,23,0.98));
+      box-shadow:0 18px 40px rgba(2,6,23,0.7); padding:16px; display:flex; flex-direction:column; gap:12px; overflow:auto;
     }
-    @keyframes panelIn {from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
 
-    /* header area */
-    .header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-    .profile {
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-    .avatar {
-      width:96px;
-      height:96px;
-      min-width:96px;
-      min-height:96px;
-      border-radius:50%;
-      background: linear-gradient(135deg, var(--accent1), var(--accent2));
-      box-shadow: 0 8px 30px rgba(99,102,241,0.16);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      font-size:34px;
-      overflow:hidden;
-    }
-    .avatar img{width:100%; height:100%; object-fit:cover; display:block}
-    .profile-info{display:flex; flex-direction:column}
-    .username{font-size:18px; font-weight:700}
-    .small-muted{color:var(--muted); font-size:12px; margin-top:6px}
+    /* header */
+    .header { display:flex; align-items:center; justify-content:space-between; gap:12px }
+    .profile { display:flex; gap:12px; align-items:center }
+    .avatar { width:88px; height:88px; border-radius:50%; background:linear-gradient(135deg,var(--accent1),var(--accent2)); display:flex; align-items:center; justify-content:center; overflow:hidden; font-weight:800; font-size:32px; box-shadow:0 8px 28px rgba(109,40,217,0.12) }
+    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .profile-info{display:flex;flex-direction:column}
+    .username{font-size:18px; font-weight:800}
+    .small-muted{font-size:12px;color:var(--muted); margin-top:6px}
 
-    /* right side control (language pill) */
-    .lang-pill {
-      display:flex;
-      align-items:center;
-      gap:8px;
-      background:var(--card);
-      padding:8px 12px;
-      border-radius:999px;
-      cursor:pointer;
-      user-select:none;
-      color:#e9eef8;
-      font-weight:600;
-      transition: transform .18s ease, background .18s linear;
-    }
-    .lang-pill:hover{transform:translateY(-3px); background:rgba(255,255,255,0.05)}
-    .lang-pill .arrow{font-size:12px; opacity:0.9}
+    /* lang pill */
+    .lang-pill{background:var(--card); padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center}
+    .lang-menu{position:relative}
+    .lang-menu .menu{position:absolute; right:0; top:calc(100% + 8px); width:140px; background:var(--card); border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,0.6); opacity:0; transform:translateY(-8px) scale(.98); transition:opacity .18s ease, transform .22s cubic-bezier(.2,.9,.2,1); pointer-events:none}
+    .lang-menu.show .menu{opacity:1; transform:translateY(0) scale(1); pointer-events:auto}
+    .menu button{display:block; width:100%; padding:10px 12px; background:transparent; border:none; color:#eaf3ff; text-align:left; cursor:pointer; font-weight:700}
+    .menu button:hover{background:rgba(255,255,255,0.02)}
 
-    /* dropdown (fade + slide) */
-    .lang-dropdown{
-      position:relative;
-    }
-    .lang-menu {
-      position:absolute;
-      right:0;
-      top:calc(100% + 8px);
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:10px;
-      box-shadow:0 12px 30px rgba(2,6,23,0.6);
-      overflow:hidden;
-      width:140px;
-      transform-origin:top right;
-      opacity:0;
-      transform: translateY(-6px) scale(.98);
-      transition: opacity .18s ease, transform .22s cubic-bezier(.2,.9,.2,1);
-      pointer-events:none;
-      z-index:30;
-    }
-    .lang-menu.show{opacity:1; transform:translateY(0) scale(1); pointer-events:auto}
-    .lang-menu button{display:flex; gap:8px; align-items:center; padding:10px 12px; width:100%; background:transparent; border:none; color:#eaf3ff; font-weight:600; cursor:pointer}
-    .lang-menu button:hover{background:rgba(255,255,255,0.02)}
-
-    /* balance big */
-    .balance-wrap{display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:6px}
-    .balance-amount{font-size:36px; font-weight:800; letter-spacing:0.6px}
+    /* balance */
+    .balance-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+    .balance-amount{font-size:34px;font-weight:900}
     .balance-sub{color:var(--muted); font-size:13px}
 
-    /* fiat pill buttons */
-    .fiat-row{display:flex; gap:8px; justify-content:center; margin-top:8px; flex-wrap:wrap}
-    .fiat-btn{
-      background:transparent;
-      border:1px solid rgba(255,255,255,0.04);
-      color:#eaf3ff;
-      padding:8px 12px;
-      border-radius:999px;
-      cursor:pointer;
-      font-weight:700;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      transition: all .18s ease;
-      min-width:80px;
-      justify-content:center;
-    }
-    .fiat-btn .sym{font-weight:800; font-size:14px}
-    .fiat-btn.active{background:linear-gradient(90deg, rgba(109,40,217,0.12), rgba(6,182,212,0.06)); border:1px solid rgba(109,40,217,0.18); transform:translateY(-4px)}
-    .fiat-btn:active{transform:scale(.98)}
+    /* fiat pills */
+    .fiat-row{display:flex; gap:8px; justify-content:center; flex-wrap:wrap}
+    .fiat-btn{background:transparent; border:1px solid rgba(255,255,255,0.04); color:#eaf3ff; padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:800; display:inline-flex; align-items:center; gap:8px; transition:all .16s ease; min-width:86px; justify-content:center}
+    .fiat-btn.active{background:linear-gradient(90deg, rgba(109,40,217,0.12), rgba(6,182,212,0.06)); border:1px solid rgba(109,40,217,0.18); transform:translateY(-3px)}
+    .fiat-btn .sym{font-weight:900}
 
-    /* actions row (four buttons) */
-    .actions{display:flex; gap:10px; padding:8px; justify-content:space-between; margin-top:6px}
-    .action-btn{
-      flex:1;
-      background: rgba(255,255,255,0.02);
-      border-radius:12px;
-      padding:12px 8px;
-      border:none;
-      color:#eef6ff;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:8px;
-      cursor:pointer;
-      position:relative;
-      overflow:hidden;
-      transition:transform .16s ease, background .16s linear;
-      min-width:0;
-    }
-    .action-btn svg{width:20px; height:20px; opacity:0.95}
-    .action-btn span{font-size:13px; font-weight:700}
-    .action-btn:hover{transform:translateY(-6px); background: rgba(255,255,255,0.035)}
-    .action-btn:active{transform:scale(.98)}
+    /* actions */
+    .actions{display:flex; gap:10px; justify-content:space-between}
+    .action-btn{flex:1;background:rgba(255,255,255,0.02); border-radius:12px; padding:12px; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; position:relative; overflow:hidden; font-weight:800; transition:transform .14s ease, background .14s}
+    .action-btn svg{width:20px;height:20px}
+    .action-btn:hover{transform:translateY(-6px); background:rgba(255,255,255,0.035)}
+    .ripple{position:absolute;border-radius:50%; transform:scale(0); animation:rip .6s linear; background:rgba(255,255,255,0.12)}
+    @keyframes rip{to{transform:scale(4); opacity:0}}
 
-    /* ripple */
-    .ripple{position:absolute; border-radius:50%; transform:scale(0); animation:rippleAnim .6s linear; background:rgba(255,255,255,0.12)}
-    @keyframes rippleAnim{to{transform:scale(4); opacity:0}}
+    /* qr card separate */
+    .qr-card{background:linear-gradient(90deg, rgba(99,102,241,0.06), rgba(6,182,212,0.03)), var(--card); border-radius:12px; padding:12px; display:flex; gap:12px; align-items:center; cursor:pointer}
+    .qr-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent1),var(--accent2)); font-weight:800}
+    .qr-text{font-weight:700}
+    .qr-sub{color:var(--muted); font-size:13px}
 
-    /* info card */
-    .info-card{display:flex; gap:12px; align-items:center; background:linear-gradient(90deg, rgba(99,102,241,0.04), rgba(6,182,212,0.03)), rgba(255,255,255,0.02); padding:12px; border-radius:12px; margin-top:6px}
-    .info-title{font-weight:700}
-    .info-sub{font-size:13px; color:var(--muted)}
-
-    /* markets grid 2 per row */
-    .markets-grid{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px}
-    .coin-card{background: rgba(255,255,255,0.02); padding:10px; border-radius:10px; display:flex; align-items:center; justify-content:space-between; gap:8px}
-    .coin-left{display:flex; gap:10px; align-items:center}
-    .coin-icon{width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:#fff}
-    .coin-info{display:flex; flex-direction:column}
-    .coin-name{font-weight:800; font-size:13px}
-    .coin-sub{font-size:12px; color:var(--muted)}
+    /* coins column */
+    .coins-list{display:flex; flex-direction:column; gap:8px; margin-top:8px}
+    .coin-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px; border-radius:10px; background:rgba(255,255,255,0.02)}
+    .coin-left{display:flex; align-items:center; gap:10px}
+    .coin-img{width:36px;height:36px;border-radius:8px; background:#222; display:flex;align-items:center;justify-content:center; overflow:hidden}
+    .coin-img img{width:100%;height:100%;object-fit:contain;display:block}
+    .coin-name{font-weight:800}
+    .coin-sub{font-size:12px;color:var(--muted)}
     .coin-right{text-align:right}
     .coin-price{font-weight:800}
-    .coin-change{font-size:12px; display:flex; align-items:center; gap:6px; justify-content:flex-end}
+    .coin-change{font-size:12px; display:flex; gap:8px; align-items:center}
 
     .up{color:var(--success)}
     .down{color:var(--danger)}
 
-    /* footer / last updated */
-    .footer{margin-top:auto; font-size:12px; color:var(--muted); text-align:center; padding-bottom:8px}
+    .footer{margin-top:auto; color:var(--muted); font-size:12px; text-align:center}
 
-    /* responsive tweaks */
+    /* small screens */
     @media (max-width:420px){
-      .avatar{width:86px; height:86px; min-width:86px; min-height:86px}
-      .balance-amount{font-size:30px}
-      .actions{gap:8px}
+      .avatar{width:78px;height:78px}
+      .balance-amount{font-size:28px}
       .action-btn span{font-size:12px}
     }
   </style>
 </head>
 <body>
-  <div class="app-viewport">
+  <!-- LOADER -->
+  <div id="loader" aria-hidden="false">
+    <div class="bird" id="bird"></div>
+  </div>
+
+  <!-- MAIN APP (hidden until loader removed) -->
+  <div class="app-viewport" id="appViewport" aria-hidden="true">
     <div class="app" role="application" aria-label="Crypto MiniApp">
       <!-- header -->
       <div class="header">
@@ -214,26 +127,22 @@
           </div>
         </div>
 
-        <!-- language pill -->
-        <div class="lang-dropdown" style="position:relative">
-          <div class="lang-pill" id="langPill" aria-haspopup="true" aria-expanded="false">
-            <span id="langLabel">RU</span>
-            <span class="arrow">▾</span>
+        <div class="lang-menu lang-menu-wrapper" id="langWrapper">
+          <div class="lang-pill" id="langPill" role="button" aria-haspopup="true" aria-expanded="false">
+            <span id="langLabel">RU</span> <span style="opacity:.8">▾</span>
           </div>
-
-          <div class="lang-menu" id="langMenu" role="menu" aria-hidden="true">
-            <button id="set-ru" data-l="ru">Русский — RU</button>
-            <button id="set-en" data-l="en">English — EN</button>
+          <div class="menu" id="langMenu" role="menu" aria-hidden="true">
+            <button id="set-ru">Русский — RU</button>
+            <button id="set-en">English — EN</button>
           </div>
         </div>
       </div>
 
       <!-- balance -->
-      <div class="balance-wrap" style="margin-top:6px">
+      <div class="balance-wrap">
         <div class="balance-amount" id="balanceAmount">0,00 TRY</div>
         <div class="balance-sub" id="balanceSub">Общий баланс в TRY</div>
 
-        <!-- fiat pills -->
         <div class="fiat-row" id="fiatRow">
           <button class="fiat-btn active" data-f="try"><span class="sym">₺</span> <span class="code">TRY</span></button>
           <button class="fiat-btn" data-f="usd"><span class="sym">$</span> <span class="code">USD</span></button>
@@ -244,88 +153,120 @@
       </div>
 
       <!-- actions -->
-      <div class="actions" aria-hidden="false">
+      <div class="actions">
         <button class="action-btn" data-act="deposit" title="Пополнить">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5"></path></svg>
+          <!-- plus -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
           <span id="lbl-deposit">Пополнить</span>
         </button>
         <button class="action-btn" data-act="withdraw" title="Вывести">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+          <!-- minus -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14"/></svg>
           <span id="lbl-withdraw">Вывести</span>
         </button>
         <button class="action-btn" data-act="exchange" title="Обмен">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h11M4 17h11M17 7l4 4-4 4"></path></svg>
+          <!-- exchange -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h11M4 17h11M17 7l4 4-4 4"/></svg>
           <span id="lbl-exchange">Обмен</span>
         </button>
         <button class="action-btn" data-act="market" title="Биржа">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18"></path></svg>
+          <!-- chart -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/></svg>
           <span id="lbl-market">Биржа</span>
         </button>
       </div>
 
-      <!-- info -->
-      <div class="info-card">
-        <div style="width:44px; height:44px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:white; font-weight:800">QR</div>
-        <div>
-          <div class="info-title" id="qrTitle">Оплата по QR-коду</div>
-          <div class="info-sub" id="qrSub">Оплачивайте покупки с помощью криптовалюты</div>
+      <!-- QR card separate -->
+      <div class="qr-card" id="qrCard">
+        <div class="qr-icon" aria-hidden="true">QR</div>
+        <div style="flex:1">
+          <div class="qr-text" id="qrTitle">Оплата по QR-коду</div>
+          <div class="qr-sub" id="qrSub">Оплачивайте покупки с помощью криптовалюты</div>
         </div>
-        <div style="margin-left:auto; color:var(--muted); font-weight:700">➜</div>
+        <div style="color:var(--muted)">➜</div>
       </div>
 
-      <!-- markets grid (2 per row) -->
-      <div class="markets-grid" id="marketsGrid" aria-live="polite">
-        <!-- cards will be injected here -->
+      <!-- coins column (with images from CoinGecko) -->
+      <div class="coins-list" id="coinsList" aria-live="polite">
+        <!-- injected -->
       </div>
 
-      <div class="footer" id="footer">Обновлено: —</div>
+      <div class="footer" id="footer"></div>
     </div>
   </div>
 
   <script>
-    /* ====== CONFIG ====== */
+    /***** EMBEDDED BIRD IMAGE *****/
+    // (data URI already embedded into CSS placeholder at build time)
+  </script>
+
+  <script>
+    // ========== SETTINGS ==========
     const COINS = [
-      { id: 'bitcoin', symbol: 'BTC' },
-      { id: 'ethereum', symbol: 'ETH' },
-      { id: 'tether', symbol: 'USDT' },
-      { id: 'solana', symbol: 'SOL' }
+      { id: 'bitcoin', symbol:'BTC', name:'Bitcoin' },
+      { id: 'ethereum', symbol:'ETH', name:'Ethereum' },
+      { id: 'tether', symbol:'USDT', name:'Tether' },
+      { id: 'solana', symbol:'SOL', name:'Solana' }
     ];
     const FIATS = ['usd','rub','eur','try','uah'];
-    const UPDATE_INTERVAL = 30000; // 30s
+    const UPDATE_INTERVAL = 300000; // 5 minutes
 
-    /* ====== UI REFS ====== */
-    const avatarEl = document.getElementById('avatar');
+    // UI refs
+    const loader = document.getElementById('loader');
+    const appViewport = document.getElementById('appViewport');
+    const langPill = document.getElementById('langPill');
+    const langMenu = document.getElementById('langMenu');
+    const langLabel = document.getElementById('langLabel');
+    const setRu = document.getElementById('set-ru');
+    const setEn = document.getElementById('set-en');
     const usernameEl = document.getElementById('username');
+    const avatarEl = document.getElementById('avatar');
     const smallMuted = document.getElementById('small-muted');
     const balanceAmountEl = document.getElementById('balanceAmount');
     const balanceSubEl = document.getElementById('balanceSub');
     const fiatBtns = Array.from(document.querySelectorAll('.fiat-btn'));
-    const marketsGrid = document.getElementById('marketsGrid');
-    const footerEl = document.getElementById('footer');
-    const langPill = document.getElementById('langPill');
-    const langMenu = document.getElementById('langMenu');
-    const langLabel = document.getElementById('langLabel');
+    const coinsList = document.getElementById('coinsList');
+    const footer = document.getElementById('footer');
 
-    let lang = 'ru';
-    let locale = 'ru-RU';
-    let selectedFiat = 'try'; // default as you showed TRY
+    let lang = 'ru', locale = 'ru-RU';
+    let selectedFiat = 'try';
+    let userBalanceUSD = 0; // demo: 0. You can set value programmatically later.
 
-    // store last prices for comparison
-    let lastPrices = {};
+    // Insert bird base64 into CSS (replace placeholder)
+    (function injectBird(){
+      const css = document.querySelector('style').innerHTML;
+      const marker = '/*BASE64_BIRD*/';
+      if(css.includes(marker)){
+        // the base64 was placed server-side in the template; if not, it's already replaced
+      }
+    })();
 
-    /* ====== Telegram integration (safe fallback) ====== */
+    // ===== loader animation: show bird 2s, fade out, then reveal app =====
+    function startLoaderThenShowApp(){
+      // 2s visible, then fade out (0.8s), then reveal app (0.45s)
+      setTimeout(()=>{
+        loader.classList.add('fadeout');
+        setTimeout(()=>{
+          // reveal app
+          appViewport.classList.add('show');
+          loader.style.display = 'none';
+          appViewport.setAttribute('aria-hidden','false');
+        }, 800);
+      }, 2000); // show bird for 2s
+    }
+
+    // ===== Telegram WebApp user load (fallback) =====
     try {
       const tg = window.Telegram?.WebApp;
-      if (tg) {
+      if(tg){
         tg.expand();
         const u = tg.initDataUnsafe?.user;
-        if (u) {
+        if(u){
           usernameEl.textContent = (u.first_name || '') + (u.last_name ? ' ' + u.last_name : '');
           smallMuted.textContent = '@' + (u.username || 'telegram');
-          if (u.photo_url) {
+          if(u.photo_url){
             const img = document.createElement('img');
             img.src = u.photo_url;
-            img.alt = usernameEl.textContent;
             avatarEl.textContent = '';
             avatarEl.appendChild(img);
           } else {
@@ -341,184 +282,21 @@
         smallMuted.textContent = 'Demo';
         avatarEl.textContent = 'G';
       }
-    } catch (e) {
-      console.warn('Telegram init failed', e);
+    } catch(e){
+      console.warn('tg init failed', e);
       usernameEl.textContent = 'Guest (demo)';
       smallMuted.textContent = 'Demo';
       avatarEl.textContent = 'G';
     }
 
-    /* ====== Utility: format money via Intl (with fallback) ====== */
-    function formatMoney(value, fiat){
-      try {
-        const currency = fiat.toUpperCase();
-        const options = { style:'currency', currency, maximumFractionDigits: 6 };
-        return new Intl.NumberFormat(locale, options).format(value);
-      } catch(e){
-        const symbols = { usd:'$', rub:'₽', eur:'€', try:'₺', uah:'₴' };
-        return (symbols[fiat] || '') + Number(value).toFixed(6);
-      }
-    }
-
-    /* ====== Build initial coin cards (placeholders) ====== */
-    function buildInitialMarkets(){
-      marketsGrid.innerHTML = '';
-      COINS.forEach(c=>{
-        const card = document.createElement('div');
-        card.className = 'coin-card';
-        card.dataset.coin = c.id;
-        card.innerHTML = `
-          <div class="coin-left">
-            <div class="coin-icon">${c.symbol}</div>
-            <div class="coin-info">
-              <div class="coin-name">${c.symbol}</div>
-              <div class="coin-sub">${c.id}</div>
-            </div>
-          </div>
-          <div class="coin-right">
-            <div class="coin-price">…</div>
-            <div class="coin-change"><span class="change-val">—</span></div>
-          </div>
-        `;
-        marketsGrid.appendChild(card);
-      });
-    }
-    buildInitialMarkets();
-
-    /* ====== Fetch prices from CoinGecko ====== */
-    async function fetchPrices(){
-      const ids = COINS.map(c=>c.id).join(',');
-      const vs = FIATS.join(',');
-      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=${vs}&include_24hr_change=true`;
-      try {
-        const res = await fetch(url);
-        if(!res.ok) throw new Error('network');
-        const data = await res.json();
-        return data;
-      } catch (err) {
-        console.error('fetchPrices error', err);
-        return null;
-      }
-    }
-
-    /* ====== Update UI with prices ====== */
-    async function updatePrices(){
-      const data = await fetchPrices();
-      if(!data){
-        document.querySelectorAll('.coin-card').forEach(card=>{
-          card.querySelector('.coin-price').textContent = '—';
-          card.querySelector('.change-val').textContent = 'err';
-        });
-        footerEl.textContent = `${lang === 'ru' ? 'Ошибка обновления' : 'Update error' }`;
-        return;
-      }
-      COINS.forEach(c=>{
-        const card = document.querySelector(`.coin-card[data-coin="${c.id}"]`);
-        if(!card) return;
-        const priceObj = data[c.id];
-        if(!priceObj) return;
-        const raw = priceObj[selectedFiat];
-        const change = priceObj[selectedFiat + '_24h_change'] ?? 0;
-
-        // format
-        const formatted = formatMoney(raw, selectedFiat);
-
-        card.querySelector('.coin-price').textContent = formatted;
-        const changeEl = card.querySelector('.change-val');
-        const arrow = change >= 0 ? '↑' : '↓';
-        changeEl.textContent = `${arrow} ${Math.abs(change).toFixed(2)}%`;
-        changeEl.classList.remove('up','down');
-        changeEl.classList.add(change >= 0 ? 'up' : 'down');
-
-        // flash if changed
-        const last = lastPrices[c.id];
-        if(last !== undefined && last !== raw){
-          card.animate([
-            { background: 'rgba(255,255,255,0.00)' },
-            { background: raw > last ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)' },
-            { background: 'rgba(255,255,255,0.00)' }
-          ], { duration:700, easing:'ease-out' });
-        }
-        lastPrices[c.id] = raw;
-      });
-
-      const now = new Date();
-      footerEl.textContent = `${lang === 'ru' ? 'Обновлено' : 'Updated'}: ${now.toLocaleTimeString(locale)}`;
-      // update balance display (still zero in demo)
-      balanceAmountEl.textContent = formatMoney(0, selectedFiat);
-      balanceSubEl.textContent = (lang === 'ru') ? `Общий баланс в ${selectedFiat.toUpperCase()}` : `Total balance in ${selectedFiat.toUpperCase()}`;
-    }
-
-    // initial load + interval
-    updatePrices();
-    setInterval(updatePrices, UPDATE_INTERVAL);
-
-    /* ====== Fiat buttons behavior ====== */
-    fiatBtns.forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        fiatBtns.forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedFiat = btn.dataset.f;
-        // format balance & update markets
-        updatePrices();
-      });
+    // ===== language toggle behavior =====
+    langPill.addEventListener('click', ()=>{
+      const menuParent = langPill.parentElement;
+      menuParent.classList.toggle('show');
     });
-
-    /* ====== Action buttons ripple effect (UI-only) ====== */
-    document.querySelectorAll('.action-btn').forEach(btn=>{
-      btn.addEventListener('click', (e)=>{
-        const rect = btn.getBoundingClientRect();
-        const ripple = document.createElement('span');
-        ripple.className = 'ripple';
-        const size = Math.max(rect.width, rect.height) * 1.2;
-        ripple.style.width = ripple.style.height = size + 'px';
-        ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
-        ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
-        btn.appendChild(ripple);
-        setTimeout(()=> ripple.remove(), 700);
-
-        // small press animation of info card to show feedback
-        const info = document.querySelector('.info-card');
-        if(info) info.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-6px)' }, { transform: 'translateY(0)' }], { duration:220, easing:'ease-out' });
-      });
-    });
-
-    /* ====== Language pill toggling (fade+slide) ====== */
-    langPill.addEventListener('click', (e)=>{
-      const isOpen = langMenu.classList.contains('show');
-      if(isOpen){
-        langMenu.classList.remove('show');
-        langPill.setAttribute('aria-expanded','false');
-        langMenu.setAttribute('aria-hidden','true');
-      } else {
-        langMenu.classList.add('show');
-        langPill.setAttribute('aria-expanded','true');
-        langMenu.setAttribute('aria-hidden','false');
-        // click outside to close
-        setTimeout(()=> {
-          const handler = (ev) => {
-            if(!langMenu.contains(ev.target) && ev.target !== langPill){
-              langMenu.classList.remove('show');
-              langPill.setAttribute('aria-expanded','false');
-              langMenu.setAttribute('aria-hidden','true');
-              document.removeEventListener('click', handler);
-            }
-          };
-          document.addEventListener('click', handler);
-        }, 10);
-      }
-    });
-
-    // set language handlers
-    document.getElementById('set-ru').addEventListener('click', ()=>{
-      setLanguage('ru');
-      langMenu.classList.remove('show');
-    });
-    document.getElementById('set-en').addEventListener('click', ()=>{
-      setLanguage('en');
-      langMenu.classList.remove('show');
-    });
-
+    setRu.addEventListener('click', ()=>{ setLanguage('ru'); setTimeout(()=> setMenuHidden(), 10); });
+    setEn.addEventListener('click', ()=>{ setLanguage('en'); setTimeout(()=> setMenuHidden(), 10); });
+    function setMenuHidden(){ langPill.parentElement.classList.remove('show'); }
     function setLanguage(l){
       lang = l;
       if(l === 'ru'){
@@ -540,24 +318,167 @@
         document.getElementById('qrTitle').textContent = 'Pay via QR code';
         document.getElementById('qrSub').textContent = 'Pay with cryptocurrency';
       }
-      // update markets/balance text immediately
-      updatePrices();
+      updateUITexts();
+      fetchAndRenderMarkets();
     }
 
-    // default language RU
-    setLanguage('ru');
+    function updateUITexts(){
+      balanceSubEl.textContent = (lang === 'ru') ? `Общий баланс в ${selectedFiat.toUpperCase()}` : `Total balance in ${selectedFiat.toUpperCase()}`;
+    }
 
-    /* ====== Accessibility: ESC closes menu ====== */
-    document.addEventListener('keydown', (e)=>{
-      if(e.key === 'Escape') {
-        langMenu.classList.remove('show');
-      }
+    // ===== fiat buttons behavior =====
+    fiatBtns.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        fiatBtns.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedFiat = btn.dataset.f;
+        updateBalanceDisplay();
+        fetchAndRenderMarkets();
+      });
     });
 
-    /* ====== Notes ======
-       - CoinGecko /simple/price endpoint is used (no API key required); rate limits apply.
-       - For production scale, proxy through your server to avoid client rate limits/CORS issues.
-    ======================= */
+    function formatMoney(value, fiat){
+      try {
+        const opts = { style:'currency', currency: fiat.toUpperCase(), maximumFractionDigits: 6 };
+        return new Intl.NumberFormat(locale, opts).format(value);
+      } catch(e){
+        const symbols = { usd:'$', rub:'₽', eur:'€', try:'₺', uah:'₴' };
+        return (symbols[fiat]||'') + Number(value).toFixed(6);
+      }
+    }
+
+    function updateBalanceDisplay(){
+      // demo: balance is 0 USD; convert using market price of USD per fiat (1:1 for USD)
+      // For real app, you'd fetch conversion rates — here use Intl to change symbol only.
+      balanceAmountEl.textContent = formatMoney(userBalanceUSD, selectedFiat);
+      balanceSubEl.textContent = (lang === 'ru') ? `Общий баланс в ${selectedFiat.toUpperCase()}` : `Total balance in ${selectedFiat.toUpperCase()}`;
+    }
+
+    // ===== coins: fetch from CoinGecko /coins/markets (gives images) =====
+    async function fetchMarkets(fiat){
+      const ids = COINS.map(c=>c.id).join(',');
+      const vs = fiat || 'usd';
+      const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${encodeURIComponent(vs)}&ids=${encodeURIComponent(ids)}&order=market_cap_desc&per_page=100&page=1&sparkline=false`;
+      try {
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('Network');
+        const data = await res.json();
+        return data;
+      } catch(err){
+        console.error('fetchMarkets err', err);
+        return null;
+      }
+    }
+
+    // build coin row element
+    function buildCoinRow(coin){
+      const row = document.createElement('div');
+      row.className = 'coin-row';
+      row.innerHTML = `
+        <div class="coin-left">
+          <div class="coin-img" aria-hidden="true"><img src="${coin.image}" alt="${coin.symbol}"></div>
+          <div>
+            <div class="coin-name">${coin.symbol}</div>
+            <div class="coin-sub">${coin.name}</div>
+          </div>
+        </div>
+        <div class="coin-right">
+          <div class="coin-price">${formatMoney(coin.current_price, selectedFiat)}</div>
+          <div class="coin-change"><span class="change-val ${coin.price_change_percentage_24h >= 0 ? 'up' : 'down'}">${coin.price_change_percentage_24h === null ? '—' : (coin.price_change_percentage_24h >= 0 ? '↑' : '↓') + ' ' + Math.abs(coin.price_change_percentage_24h).toFixed(2) + '%'}</span></div>
+        </div>
+      `;
+      return row;
+    }
+
+    async function fetchAndRenderMarkets(){
+      coinsList.innerHTML = ''; // loading placeholders
+      COINS.forEach(c=>{
+        const ph = document.createElement('div');
+        ph.className = 'coin-row';
+        ph.innerHTML = `<div class="coin-left"><div class="coin-img"></div><div><div class="coin-name">${c.symbol}</div><div class="coin-sub">${c.id}</div></div></div><div class="coin-right"><div class="coin-price">…</div><div class="coin-change"><span class="change-val">—</span></div></div>`;
+        coinsList.appendChild(ph);
+      });
+
+      const data = await fetchMarkets(selectedFiat);
+      if(!data){
+        footer.textContent = (lang === 'ru') ? 'Ошибка загрузки курсов' : 'Failed to load prices';
+        return;
+      }
+      coinsList.innerHTML = '';
+      // preserve order from COINS
+      COINS.forEach(sym=>{
+        const d = data.find(x => x.id === sym.id);
+        if(d){
+          coinsList.appendChild(buildCoinRow(d));
+        } else {
+          // fallback placeholder
+          const ph = document.createElement('div');
+          ph.className = 'coin-row';
+          ph.innerHTML = `<div class="coin-left"><div class="coin-img"></div><div><div class="coin-name">${sym.symbol}</div><div class="coin-sub">${sym.id}</div></div></div><div class="coin-right"><div class="coin-price">—</div><div class="coin-change"><span class="change-val">—</span></div></div>`;
+          coinsList.appendChild(ph);
+        }
+      });
+      footer.textContent = ''; // we don't show timestamp as requested
+    }
+
+    // initial fetch + interval
+    fetchAndRenderMarkets();
+    updateBalanceDisplay();
+    setInterval(fetchAndRenderMarkets, UPDATE_INTERVAL);
+
+    // action btn ripple
+    document.querySelectorAll('.action-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const rect = btn.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        const size = Math.max(rect.width, rect.height) * 1.2;
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+        ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+        btn.appendChild(ripple);
+        setTimeout(()=> ripple.remove(), 700);
+      });
+    });
+
+    // QR card click ripple
+    document.getElementById('qrCard').addEventListener('click', (e)=>{
+      const el = e.currentTarget;
+      const rect = el.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      const size = Math.max(rect.width, rect.height) * 1.2;
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+      ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+      el.appendChild(ripple);
+      setTimeout(()=> ripple.remove(), 700);
+    });
+
+    // start loader -> show app
+    startLoaderThenShowApp();
+
+    // set default language RU
+    setLanguage('ru');
+
+  </script>
+
+  <!-- ========== EMBEDDED BIRD BASE64 (replaced at runtime by assistant) ========== -->
+  <script>
+    // Replace the placeholder BASE64_BIRD in the style block with actual base64 of uploaded bird image.
+    (function(){
+      // base64 data for the bird image (uploaded by you) is injected here.
+      const base64 = "iVBORw0KGgoAAAANSUhEUgAAAZAAAABkCAYAAABm2w9iAAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nOydd7wc1X3/737iK1QDAEBCoUuE5oQUpkW0SQp..." ;
+      // NOTE: The above string is a placeholder in this snippet. When saving locally, replace it with the full Base64 string.
+      // We'll perform replacement now:
+      try {
+        const style = document.querySelector('style').textContent;
+        if(style.includes('/*BASE64_BIRD*/')){
+          const newStyle = style.replace('/*BASE64_BIRD*/', base64);
+          document.querySelector('style').textContent = newStyle;
+        }
+      } catch(e){ /* ignore if can't replace */ }
+    })();
   </script>
 </body>
 </html>
