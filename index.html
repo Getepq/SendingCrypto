@@ -1,366 +1,163 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Crypto Bot — Mini App</title>
-
-  <!-- Tailwind CDN -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SendingCrypto</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
   <style>
-    /* Доп. стиль для плавности и glassmorphism */
-    :root{
-      --bg:#0f1724;
-      --card:#111827;
-      --muted:rgba(255,255,255,0.55);
+    body {
+      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      font-family: "Inter", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      overflow-x: hidden;
     }
 
-    body{
-      background: linear-gradient(180deg, #0b1220 0%, #0f1724 100%);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      min-height:100vh;
-    }
-
-    /* glass card */
     .glass {
-      background: rgba(17,24,39,0.55);
-      backdrop-filter: blur(8px) saturate(120%);
-      -webkit-backdrop-filter: blur(8px) saturate(120%);
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 6px 24px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border-radius: 1rem;
     }
 
-    /* tiny entrance animation */
     .fade-in {
-      transform: translateY(6px);
       opacity: 0;
-      animation: enter .45s cubic-bezier(.2,.9,.3,1) forwards;
-    }
-    .delay-1 { animation-delay: .06s; }
-    .delay-2 { animation-delay: .12s; }
-    .delay-3 { animation-delay: .18s; }
-    .delay-4 { animation-delay: .24s; }
-
-    @keyframes enter {
-      to { transform: translateY(0); opacity: 1; }
+      transform: translateY(10px);
+      animation: fadeInUp 0.6s ease-out forwards;
     }
 
-    /* don't let text escape */
-    .truncate-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    /* small green/red for change */
-    .up { color: #22c55e; }
-    .down { color: #f43f5e; }
+    .btn {
+      transition: all 0.15s ease;
+      transform: scale(1);
+    }
 
-    /* hover card lift */
-    .lift:hover { transform: translateY(-4px); transition: transform .18s ease; }
-
-    /* icons area to keep same size */
-    .circle-icon { width:48px; height:48px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; }
+    .btn:active {
+      transform: scale(0.95);
+      background-color: rgba(51, 65, 85, 0.8);
+    }
   </style>
 </head>
-<body class="font-sans text-white antialiased">
 
-  <main class="min-h-screen flex items-start justify-center p-4 pb-10">
-    <div class="w-full max-w-sm">
-
-      <!-- Topbar -->
-      <div class="glass rounded-2xl p-3 flex items-center gap-3 fade-in delay-1 lift">
-        <div class="flex items-center gap-3 w-full">
-          <div class="relative">
-            <img id="user-photo" src="https://via.placeholder.com/80" alt="avatar"
-                 class="w-12 h-12 rounded-full border border-white/8 object-cover" />
-            <div id="online-dot" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-400 ring-2 ring-black hidden"></div>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2">
-              <div class="min-w-0">
-                <div id="user-name" class="text-sm font-semibold truncate">Гость</div>
-                <div class="text-xs text-white/60">Crypto Bot</div>
-              </div>
-
-              <div class="flex items-center gap-3">
-                <!-- small utility icons -->
-                <button aria-label="menu" class="p-2 rounded-full bg-white/3 hover:bg-white/5">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                </button>
-                <button aria-label="close" class="p-2 rounded-full bg-white/3 hover:bg-white/5">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+<body>
+  <!-- Верхняя панель -->
+  <div id="header" class="glass w-full max-w-sm p-4 flex items-center justify-between gap-3 mt-3 fade-in">
+    <div class="flex items-center gap-3">
+      <img id="user-photo" src="https://via.placeholder.com/48" alt="avatar" class="w-12 h-12 rounded-full border border-gray-600" />
+      <div>
+        <h2 id="user-name" class="text-lg font-semibold">Гость</h2>
+        <p class="text-sm text-gray-400">Crypto Bot</p>
       </div>
-
-      <!-- Balance -->
-      <div class="mt-5 p-6 glass rounded-2xl text-center fade-in delay-2 lift">
-        <div class="flex items-center justify-center gap-3">
-          <div class="text-3xl font-extrabold" id="balance-amount">$0</div>
-          <button id="toggle-balance" title="Показать/скрыть баланс" class="p-2 rounded-full bg-white/3 hover:bg-white/5">
-            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.3"/></svg>
-          </button>
-        </div>
-        <div class="text-xs text-white/60 mt-2">Общий баланс в USD</div>
-      </div>
-
-      <!-- Action buttons (4) -->
-      <div class="mt-5 grid grid-cols-4 gap-3">
-        <div class="text-center fade-in delay-3">
-          <button class="w-full flex flex-col items-center gap-2">
-            <div class="circle-icon glass lift bg-blue-600/20">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#63b3ed" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div class="text-xs text-white/80">Пополнить</div>
-          </button>
-        </div>
-
-        <div class="text-center fade-in delay-3">
-          <button class="w-full flex flex-col items-center gap-2">
-            <div class="circle-icon glass lift bg-green-600/18">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="#7dd3fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div class="text-xs text-white/80">Вывести</div>
-          </button>
-        </div>
-
-        <div class="text-center fade-in delay-3">
-          <button class="w-full flex flex-col items-center gap-2">
-            <div class="circle-icon glass lift bg-indigo-600/18">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 12h-6M3 12h6M12 3v6M12 21v-6" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div class="text-xs text-white/80">Обмен</div>
-          </button>
-        </div>
-
-        <div class="text-center fade-in delay-3">
-          <button class="w-full flex flex-col items-center gap-2">
-            <div class="circle-icon glass lift bg-sky-600/18">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9l6-6 6 6M6 15l6 6 6-6" stroke="#7dd3fc" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div class="text-xs text-white/80">Биржа</div>
-          </button>
-        </div>
-      </div>
-
-      <!-- QR / Promo -->
-      <div class="mt-5 glass rounded-2xl p-4 flex items-center justify-between gap-3 fade-in delay-4 lift">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-inner">
-            <!-- stylized logo -->
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4v16" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
-          </div>
-          <div class="min-w-0">
-            <div class="text-sm font-semibold truncate">Оплата по QR-коду</div>
-            <div class="text-xs text-white/60 truncate-2">Оплачивайте любые покупки с помощью криптовалюты</div>
-          </div>
-        </div>
-        <div>
-          <button class="p-2 rounded-full bg-white/6 hover:bg-white/8">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13 7l5 5-5 5M6 7h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Assets list -->
-      <div class="mt-6 flex items-center justify-between text-sm text-white/60">
-        <div>Активы</div>
-        <button id="hide-small" class="text-xs text-sky-400">Скрыть мелкие балансы</button>
-      </div>
-
-      <div id="assets" class="mt-3 space-y-3">
-        <!-- template items will be injected by JS -->
-      </div>
-
-      <div class="mt-6 text-center text-xs text-white/40">© send</div>
-
     </div>
-  </main>
+    <div class="text-gray-400 text-xl cursor-pointer">☰</div>
+  </div>
+
+  <!-- Баланс -->
+  <div class="glass w-full max-w-sm p-5 text-center mt-4 fade-in">
+    <h1 id="balance" class="text-4xl font-bold">$0</h1>
+    <p class="text-gray-400 text-sm flex items-center justify-center gap-1 mt-1">
+      Общий баланс в USD
+      <span id="eye" class="cursor-pointer text-lg">👁️</span>
+    </p>
+  </div>
+
+  <!-- Кнопки -->
+  <div class="grid grid-cols-4 gap-3 w-full max-w-sm mt-4 fade-in">
+    <button class="glass p-3 rounded-2xl btn" onclick="showAlert()">Пополнить</button>
+    <button class="glass p-3 rounded-2xl btn" onclick="showAlert()">Вывести</button>
+    <button class="glass p-3 rounded-2xl btn" onclick="showAlert()">Обмен</button>
+    <button class="glass p-3 rounded-2xl btn" onclick="showAlert()">Биржа</button>
+  </div>
+
+  <!-- QR -->
+  <div class="glass w-full max-w-sm p-4 mt-5 flex items-center justify-between fade-in">
+    <div>
+      <h3 class="font-semibold text-sm">Оплата по QR-коду</h3>
+      <p class="text-xs text-gray-400">Оплачивайте любые покупки с помощью криптовалюты</p>
+    </div>
+    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-lg shadow-md">💳</div>
+  </div>
+
+  <!-- Активы -->
+  <div class="w-full max-w-sm mt-5 fade-in">
+    <div class="flex justify-between items-center mb-2">
+      <h3 class="text-sm text-gray-400">Активы</h3>
+      <p class="text-sm text-blue-400 cursor-pointer">Скрыть мелкие балансы</p>
+    </div>
+
+    <div id="assets"></div>
+  </div>
 
   <script>
-    // Helper formatters
-    const money = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(v);
-    const numShort = v => Number(v).toLocaleString('en-US', { maximumFractionDigits: 6 });
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-    // Assets config (CoinGecko ids + display)
-    const ASSETS = [
-      { id: 'tether', label: 'Tether', symbol: 'USDT', color: 'from-emerald-400 to-emerald-600', logoText: 'T' },
-      { id: 'toncoin', label: 'Toncoin', symbol: 'TON', color: 'from-sky-400 to-sky-600', logoText: 'TON' },
-      { id: 'solana', label: 'Solana', symbol: 'SOL', color: 'from-violet-400 to-violet-600', logoText: 'S' },
-    ];
-
-    // create asset item DOM
-    function makeAssetEl(asset) {
-      const el = document.createElement('div');
-      el.className = 'glass rounded-2xl p-4 flex items-center justify-between lift';
-      el.innerHTML = `
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg,var(--g1),var(--g2)); color:white; font-weight:700">
-            ${asset.logoText}
-          </div>
-          <div class="min-w-0">
-            <div class="text-sm font-medium truncate">${asset.label}</div>
-            <div class="text-xs text-white/60" id="price-${asset.id}">—</div>
-          </div>
-        </div>
-        <div class="text-right min-w-[90px]">
-          <div class="text-sm font-semibold" id="balance-${asset.id}">0 ${asset.symbol}</div>
-          <div class="text-xs text-white/60" id="usd-${asset.id}">$0</div>
-        </div>
-      `;
-      // set CSS variables for gradient
-      const [g1, g2] = asset.color.split(' to ').map(s => {
-        // map tailwind color to hex-ish fallback
-        if (s.includes('emerald')) return s.includes('400') ? '#34d399' : '#059669';
-        if (s.includes('sky')) return s.includes('400') ? '#60a5fa' : '#0ea5e9';
-        if (s.includes('violet')) return s.includes('400') ? '#a78bfa' : '#7c3aed';
-        return '#334155';
-      });
-      el.style.setProperty('--g1', g1);
-      el.style.setProperty('--g2', g2);
-      return el;
+    const user = tg.initDataUnsafe?.user;
+    if (user) {
+      document.getElementById("user-name").textContent = `${user.first_name} ${user.last_name || ""}`;
+      document.getElementById("user-photo").src = user.photo_url || "https://via.placeholder.com/48";
     }
 
-    // Render placeholders for assets
-    const assetsContainer = document.getElementById('assets');
-    ASSETS.forEach(a => assetsContainer.appendChild(makeAssetEl(a)));
-
-    // Balance shown: sum of holdings in USD.
-    // For now holdings are 0 (as in screenshot). You can change this object to reflect real holdings.
-    const holdings = {
-      tether: 0,
-      toncoin: 0,
-      solana: 0
-    };
-
-    // Toggle balance visibility
-    let balanceHidden = false;
-    document.getElementById('toggle-balance').addEventListener('click', () => {
-      balanceHidden = !balanceHidden;
-      document.getElementById('balance-amount').textContent = balanceHidden ? '••••' : formatBalance(totalBalanceUSD);
-      // toggle eye icon style (optional)
-      document.getElementById('eye-icon').style.opacity = balanceHidden ? 0.6 : 1;
+    const balanceEl = document.getElementById("balance");
+    const eyeEl = document.getElementById("eye");
+    let visible = true;
+    eyeEl.addEventListener("click", () => {
+      visible = !visible;
+      balanceEl.textContent = visible ? "$0" : "••••";
     });
 
-    // fetch real prices from CoinGecko
-    const ids = ASSETS.map(a => a.id).join(',');
-    const fetchPrices = async () => {
+    function showAlert() {
+      alert("Функция скоро будет доступна 💫");
+    }
+
+    async function loadRates() {
       try {
-        const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('CoinGecko error');
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether,toncoin,solana&vs_currencies=usd");
         const data = await res.json();
 
-        // update UI per asset
-        ASSETS.forEach(a => {
-          const info = data[a.id];
-          const priceEl = document.getElementById(`price-${a.id}`);
-          const usdEl = document.getElementById(`usd-${a.id}`);
-          const balEl = document.getElementById(`balance-${a.id}`);
+        const assets = [
+          { name: "Tether", symbol: "USDT", price: data.tether.usd, color: "bg-green-500" },
+          { name: "Toncoin", symbol: "TON", price: data.toncoin.usd, color: "bg-blue-500" },
+          { name: "Solana", symbol: "SOL", price: data.solana.usd, color: "bg-purple-500" },
+        ];
 
-          if (info) {
-            const price = info.usd ?? 0;
-            const change = info.usd_24h_change ?? 0;
-            priceEl.innerHTML = `${money(price)} <span class="${change>=0?'up':'down'} text-xs ml-2">${(change>=0?'+':'')+change.toFixed(2)}%</span>`;
-            const usdValue = holdings[a.id] * price;
-            usdEl.textContent = money(usdValue);
-            balEl.textContent = `${numShort(holdings[a.id])} ${a.symbol}`;
-          } else {
-            priceEl.textContent = '—';
-            usdEl.textContent = '$0';
-          }
-        });
-
-        // update total balance
-        updateTotalBalance(data);
-      } catch (err) {
-        console.error('Price fetch error', err);
-      }
-    };
-
-    let totalBalanceUSD = 0;
-    function updateTotalBalance(data){
-      totalBalanceUSD = ASSETS.reduce((sum, a) => {
-        const p = data?.[a.id]?.usd ?? 0;
-        return sum + (holdings[a.id] || 0) * p;
-      }, 0);
-
-      document.getElementById('balance-amount').textContent = balanceHidden ? '••••' : formatBalance(totalBalanceUSD);
-    }
-
-    function formatBalance(v){
-      // keep neat: if 0 show $0
-      return money(v);
-    }
-
-    // initial fetch + polling
-    fetchPrices();
-    setInterval(fetchPrices, 60_000); // обновлять каждую минуту
-
-    // TELEGRAM WEBAPP integration
-    (function initTelegram(){
-      const tg = window.Telegram?.WebApp;
-      if (!tg) {
-        // Not inside Telegram — show placeholder user
-        document.getElementById('user-name').textContent = 'Гость';
-        document.getElementById('user-photo').src = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=60';
-        return;
-      }
-
-      try {
-        tg.expand(); // expand in telegram container (if supported)
-        const user = tg.initDataUnsafe?.user ?? null;
-        if (user) {
-          const fullName = `${user.first_name || ''}${user.last_name ? ' ' + user.last_name : ''}`.trim();
-          document.getElementById('user-name').textContent = fullName || (user.username ? user.username : 'Пользователь');
-          // Telegram may not provide photo_url in all clients — if not, use placeholder.
-          if (user.photo_url) {
-            document.getElementById('user-photo').src = user.photo_url;
-            document.getElementById('online-dot').classList.remove('hidden');
-          } else {
-            // gravatar-like fallback from initials: create data-URL with initials (simple)
-            const initials = (user.first_name ? user.first_name[0] : 'U') + (user.last_name ? user.last_name[0] : '');
-            document.getElementById('user-photo').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=111827&color=fff&rounded=true&size=128`;
-          }
-        } else {
-          document.getElementById('user-name').textContent = 'Гость';
-        }
+        const container = document.getElementById("assets");
+        container.innerHTML = assets.map(a => `
+          <div class="glass p-4 mb-3 flex items-center justify-between transition hover:scale-[1.02]">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 ${a.color} rounded-full flex items-center justify-center text-sm font-bold">${a.symbol[0]}</div>
+              <span>${a.name}</span>
+            </div>
+            <div class="text-right text-sm text-gray-300">
+              0 ${a.symbol}<br><span class="text-xs text-gray-400">$${a.price.toFixed(2)}</span>
+            </div>
+          </div>
+        `).join("");
       } catch (e) {
-        console.warn('Telegram init error', e);
+        console.error("Ошибка загрузки курсов:", e);
       }
-    })();
+    }
 
-    // initial total balance display
-    document.getElementById('balance-amount').textContent = formatBalance(0);
-
-    // Optional: hide small balances button (simple)
-    document.getElementById('hide-small').addEventListener('click', () => {
-      // currently holdings are zero; toggling hides assets with $0 (if user sets holdings later)
-      const nodes = ASSETS.map(a => document.getElementById(`price-${a.id`).closest('.glass')).filter(Boolean);
-      // simple visual effect: remove items with zero USD
-      ASSETS.forEach(a => {
-        const usdText = document.getElementById(`usd-${a.id}`).textContent || '';
-        if (usdText.trim() === '$0.00' || usdText.trim() === '$0') {
-          document.getElementById(`usd-${a.id}`).closest('.glass').style.display = 'none';
-        }
-      });
-      // hide button after click
-      document.getElementById('hide-small').style.display = 'none';
-    });
-
-    // small accessibility: prevent text overflow globally
-    window.addEventListener('resize', () => {
-      // noop - layout uses truncation & flexbox so text won't escape
-    });
+    loadRates();
+    setInterval(loadRates, 60000);
   </script>
 </body>
 </html>
