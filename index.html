@@ -2,263 +2,255 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Crypto MiniApp — Demo</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Crypto MiniApp</title>
   <style>
-    :root{
-      --bg-a: #0b0c0f;
-      --bg-b: #0f1220;
-      --panel: #111217;
-      --muted: #9aa0a6;
-      --card: rgba(255,255,255,0.03);
-      --accent1: #6d28d9;
-      --accent2: #06b6d4;
-      --success: #10b981;
-      --danger: #ef4444;
+    :root {
+      --bg: #0a0a0a;
+      --panel: #111111;
+      --border: #1a1a1a;
+      --text: #eaeaea;
+      --muted: #888;
+      --accent: #0070f3;
     }
 
-    *{box-sizing:border-box}
-    html,body{
-      height:100%;
-      margin:0;
-      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      -webkit-font-smoothing:antialiased;
-      background: linear-gradient(180deg,var(--bg-a), var(--bg-b));
-      color:#e6eef8;
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
 
-    .app-viewport{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:14px}
-    .app{
-      width:100%;
-      max-width:420px;
-      height:calc(100vh - 28px);
-      border-radius:18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)), linear-gradient(180deg,var(--panel), rgba(17,18,23,0.98));
-      box-shadow: 0 18px 40px rgba(2,6,23,0.7);
-      padding:18px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      overflow:auto;
-      animation: panelIn .45s cubic-bezier(.2,.9,.2,1);
-      position:relative;
+    .app {
+      width: 380px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      position: relative;
     }
-    @keyframes panelIn {from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
 
     .header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      position:relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+
     .profile {
-      display:flex;
-      align-items:center;
-      gap:12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
+
     .avatar {
-      width:86px;
-      height:86px;
-      min-width:86px;
-      min-height:86px;
-      border-radius:50%;
-      background: linear-gradient(135deg, var(--accent1), var(--accent2));
-      box-shadow: 0 8px 30px rgba(99,102,241,0.16);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      font-size:34px;
-      overflow:hidden;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 1px solid var(--border);
     }
-    .avatar img{width:100%; height:100%; object-fit:cover; display:block}
-    .profile-info{display:flex; flex-direction:column}
-    .username{font-size:18px; font-weight:700}
-    .small-muted{color:var(--muted); font-size:12px; margin-top:4px}
 
-    /* язык */
-    .lang-dropdown {
-      position:absolute;
-      top:0;
-      right:0;
-      transform:translateY(-6px);
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
-    .lang-pill {
-      display:flex;
-      align-items:center;
-      gap:8px;
-      background:var(--card);
-      padding:6px 10px;
-      border-radius:999px;
-      cursor:pointer;
-      user-select:none;
-      color:#e9eef8;
-      font-weight:600;
-      transition: transform .18s ease, background .18s linear;
-      font-size:13px;
-    }
-    .lang-pill:hover{transform:translateY(-3px); background:rgba(255,255,255,0.05)}
-    .lang-pill .arrow{font-size:12px; opacity:0.9}
-    .lang-menu {
-      position:absolute;
-      right:0;
-      top:calc(100% + 6px);
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:10px;
-      box-shadow:0 12px 30px rgba(2,6,23,0.6);
-      overflow:hidden;
-      width:140px;
-      opacity:0;
-      transform: translateY(-6px) scale(.98);
-      transition: opacity .18s ease, transform .22s cubic-bezier(.2,.9,.2,1);
-      pointer-events:none;
-      z-index:30;
-    }
-    .lang-menu.show{opacity:1; transform:translateY(0) scale(1); pointer-events:auto}
-    .lang-menu button{display:flex; gap:8px; align-items:center; padding:10px 12px; width:100%; background:transparent; border:none; color:#eaf3ff; font-weight:600; cursor:pointer}
-    .lang-menu button:hover{background:rgba(255,255,255,0.02)}
 
-    /* баланс */
-    .balance-wrap{display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:6px}
-    .balance-amount{font-size:36px; font-weight:800}
-    .balance-sub{color:var(--muted); font-size:13px}
+    .name {
+      font-weight: 600;
+    }
 
-    /* кнопки валют в столбик */
-    .fiat-row{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      align-items:center;
-      margin-top:8px;
+    .lang {
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      user-select: none;
+      transition: background .2s;
     }
-    .fiat-btn{
-      background:transparent;
-      border:1px solid rgba(255,255,255,0.04);
-      color:#eaf3ff;
-      padding:8px 14px;
-      border-radius:999px;
-      cursor:pointer;
-      font-weight:700;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      transition: all .18s ease;
-      min-width:80px;
-      justify-content:center;
-      width:70%;
-    }
-    .fiat-btn.active{background:linear-gradient(90deg, rgba(109,40,217,0.12), rgba(6,182,212,0.06)); border:1px solid rgba(109,40,217,0.18); transform:translateY(-2px)}
+    .lang:hover { background: #222; }
 
-    /* кнопки действий */
-    .actions{
-      display:flex;
-      gap:8px;
-      justify-content:space-between;
-      margin-top:10px;
+    .balance {
+      text-align: center;
+      margin-top: 6px;
+      cursor: pointer;
+      user-select: none;
     }
-    .action-btn{
-      flex:1;
-      background: rgba(255,255,255,0.03);
-      border-radius:10px;
-      padding:8px 4px;
-      border:none;
-      color:#eef6ff;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:4px;
-      cursor:pointer;
-      font-size:22px;
-      transition:transform .16s ease, background .16s linear;
-    }
-    .action-btn span{font-size:12px; font-weight:700}
-    .action-btn:hover{transform:translateY(-4px); background: rgba(255,255,255,0.05)}
 
-    .info-card{display:flex; gap:12px; align-items:center; background:linear-gradient(90deg, rgba(99,102,241,0.04), rgba(6,182,212,0.03)), rgba(255,255,255,0.02); padding:12px; border-radius:12px; margin-top:6px}
-    .info-title{font-weight:700}
-    .info-sub{font-size:13px; color:var(--muted)}
-
-    /* валюты в столбик */
-    .markets-grid{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top:10px;
+    .balance-amount {
+      font-size: 36px;
+      font-weight: 700;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
     }
-    .coin-card{background: rgba(255,255,255,0.02); padding:10px; border-radius:10px; display:flex; align-items:center; justify-content:space-between; gap:8px}
-    .coin-left{display:flex; gap:10px; align-items:center}
-    .coin-icon{width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:#fff}
-    .coin-info{display:flex; flex-direction:column}
-    .coin-name{font-weight:800; font-size:13px}
-    .coin-sub{font-size:12px; color:var(--muted)}
-    .coin-right{text-align:right}
-    .coin-price{font-weight:800}
-    .coin-change{font-size:12px; display:flex; align-items:center; gap:6px; justify-content:flex-end}
-    .up{color:var(--success)}
-    .down{color:var(--danger)}
-    .footer{margin-top:auto; font-size:12px; color:var(--muted); text-align:center; padding-bottom:8px}
+
+    .balance-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .action-btn {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 0;
+      margin: 0 3px;
+      text-align: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .action-btn:hover {
+      background: #1d1d1d;
+      border-color: #2a2a2a;
+      transform: translateY(-2px);
+    }
+
+    .action-btn .icon {
+      font-size: 20px;
+    }
+
+    .qr-btn {
+      margin-top: 6px;
+      background: linear-gradient(90deg, #0070f3, #00bcd4);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: transform .2s;
+    }
+
+    .qr-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .qr-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qr-icon {
+      width: 38px;
+      height: 38px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: auto;
+    }
   </style>
 </head>
 <body>
-  <div class="app-viewport">
-    <div class="app">
-      <div class="header">
-        <div class="profile">
-          <div class="avatar" id="avatar">U</div>
-          <div class="profile-info">
-            <div class="username" id="username">Загрузка...</div>
-            <div class="small-muted" id="small-muted">Telegram</div>
-          </div>
-        </div>
-
-        <div class="lang-dropdown">
-          <div class="lang-pill" id="langPill"><span id="langLabel">RU</span><span class="arrow">▾</span></div>
-          <div class="lang-menu" id="langMenu">
-            <button id="set-ru">Русский — RU</button>
-            <button id="set-en">English — EN</button>
-          </div>
-        </div>
+  <div class="app">
+    <div class="header">
+      <div class="profile">
+        <div class="avatar"><img src="https://i.pravatar.cc/100" alt=""></div>
+        <div class="name">Yipir</div>
       </div>
-
-      <div class="balance-wrap">
-        <div class="balance-amount" id="balanceAmount">0,00 TRY</div>
-        <div class="balance-sub" id="balanceSub">Общий баланс в TRY</div>
-
-        <div class="fiat-row" id="fiatRow">
-          <button class="fiat-btn active" data-f="try"><span class="sym">₺</span> TRY</button>
-          <button class="fiat-btn" data-f="usd"><span class="sym">$</span> USD</button>
-          <button class="fiat-btn" data-f="rub"><span class="sym">₽</span> RUB</button>
-          <button class="fiat-btn" data-f="eur"><span class="sym">€</span> EUR</button>
-          <button class="fiat-btn" data-f="uah"><span class="sym">₴</span> UAH</button>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="action-btn" data-act="deposit">➕<span id="lbl-deposit">Пополнить</span></button>
-        <button class="action-btn" data-act="withdraw">➖<span id="lbl-withdraw">Вывести</span></button>
-        <button class="action-btn" data-act="exchange">↔️<span id="lbl-exchange">Обмен</span></button>
-        <button class="action-btn" data-act="market">📈<span id="lbl-market">Биржа</span></button>
-      </div>
-
-      <div class="info-card">
-        <div style="width:44px; height:44px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:white; font-weight:800">QR</div>
-        <div>
-          <div class="info-title" id="qrTitle">Оплата по QR-коду</div>
-          <div class="info-sub" id="qrSub">Оплачивайте покупки с помощью криптовалюты</div>
-        </div>
-        <div style="margin-left:auto; color:var(--muted); font-weight:700">➜</div>
-      </div>
-
-      <div class="markets-grid" id="marketsGrid"></div>
-      <div class="footer" id="footer">Обновлено: —</div>
+      <div class="lang" id="lang">RU ▾</div>
     </div>
+
+    <div class="balance" id="balance">
+      <div class="balance-amount">
+        <span id="symbol">₺</span>
+        <span id="amount">0</span>
+      </div>
+      <div class="balance-sub" id="balance-sub">Общий баланс в TRY</div>
+    </div>
+
+    <div class="actions">
+      <div class="action-btn">
+        <div class="icon">↩</div>
+        <div>Пополнить</div>
+      </div>
+      <div class="action-btn">
+        <div class="icon">↪</div>
+        <div>Вывести</div>
+      </div>
+      <div class="action-btn">
+        <div class="icon">🔁</div>
+        <div>Обмен</div>
+      </div>
+      <div class="action-btn">
+        <div class="icon">📈</div>
+        <div>Биржа</div>
+      </div>
+    </div>
+
+    <button class="qr-btn">
+      <div class="qr-left">
+        <div class="qr-icon">QR</div>
+        <div>
+          <div>Оплата по QR-коду</div>
+          <div style="font-size:13px; opacity:0.8;">Оплачивайте покупки с помощью криптовалюты</div>
+        </div>
+      </div>
+      <div>➜</div>
+    </button>
+
+    <div class="footer">@shalopenko</div>
   </div>
 
   <script>
-    // ... оставляем твой JavaScript без изменений ...
+    const balance = document.getElementById('balance');
+    const symbol = document.getElementById('symbol');
+    const sub = document.getElementById('balance-sub');
+
+    const currencies = [
+      { code: 'TRY', symbol: '₺' },
+      { code: 'USD', symbol: '$' },
+      { code: 'RUB', symbol: '₽' },
+      { code: 'EUR', symbol: '€' },
+      { code: 'UAH', symbol: '₴' }
+    ];
+    let current = 0;
+
+    balance.addEventListener('click', () => {
+      current = (current + 1) % currencies.length;
+      const c = currencies[current];
+      symbol.textContent = c.symbol;
+      sub.textContent = `Общий баланс в ${c.code}`;
+    });
   </script>
 </body>
 </html>
