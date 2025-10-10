@@ -29,7 +29,7 @@
       backdrop-filter: blur(10px);
       border-radius: 20px;
       padding: 24px;
-      width: 320px;
+      width: 340px;
       box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
       text-align: center;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -84,6 +84,55 @@
       margin-bottom: 20px;
     }
 
+    /* ===== Курсы валют ===== */
+    .rates {
+      background: #1f1f22;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    .rates-title {
+      font-size: 14px;
+      color: #a1a1aa;
+      margin-bottom: 8px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .rate {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 14px;
+      border-bottom: 1px solid #2c2c2f;
+    }
+
+    .rate:last-child {
+      border-bottom: none;
+    }
+
+    .rate-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rate img {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+    }
+
+    .rate span:last-child {
+      color: #22d3ee;
+      font-weight: 500;
+    }
+
+    /* ======================= */
+
     .buttons {
       display: flex;
       justify-content: space-between;
@@ -114,30 +163,26 @@
       background: #52525b;
     }
 
-    .footer-card {
-      background: #27272a;
+    .qr-button {
+      width: 100%;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      border: none;
       border-radius: 14px;
-      padding: 12px;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      padding: 12px 0;
+      font-size: 15px;
+      font-weight: 500;
       cursor: pointer;
-      transition: background 0.25s ease;
+      transition: all 0.25s ease;
     }
 
-    .footer-card:hover {
-      background: #323236;
+    .qr-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
     }
 
-    .footer-text {
-      font-size: 13px;
-      color: #a1a1aa;
-    }
-
-    .footer-icon {
-      color: #818cf8;
-      font-size: 20px;
+    .qr-button:active {
+      transform: scale(0.97);
     }
 
     @keyframes press {
@@ -157,6 +202,18 @@
     <div class="balance">$0</div>
     <div class="subtext">Общий баланс в USD</div>
 
+    <!-- ===== Курсы валют ===== -->
+    <div class="rates">
+      <div class="rates-title">Курс валют</div>
+      <div id="rates-list">
+        <div class="rate"><div class="rate-info"><img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="BTC"><span>BTC / USD</span></div><span>—</span></div>
+        <div class="rate"><div class="rate-info"><img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="ETH"><span>ETH / USD</span></div><span>—</span></div>
+        <div class="rate"><div class="rate-info"><img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" alt="BNB"><span>BNB / USD</span></div><span>—</span></div>
+        <div class="rate"><div class="rate-info"><img src="https://cryptologos.cc/logos/solana-sol-logo.png" alt="SOL"><span>SOL / USD</span></div><span>—</span></div>
+      </div>
+    </div>
+    <!-- ======================== -->
+
     <div class="buttons">
       <button class="btn">Пополнить</button>
       <button class="btn">Вывести</button>
@@ -164,16 +221,39 @@
       <button class="btn">Биржа</button>
     </div>
 
-    <div class="footer-card">
-      <div class="footer-text">
-        Оплата по QR-коду<br>
-        <small>Оплачивайте покупки с помощью криптовалюты</small>
-      </div>
-      <div class="footer-icon">➜</div>
-    </div>
+    <button class="qr-button" id="qrButton">Оплата по QR-коду</button>
   </div>
 
   <script>
+    const symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"];
+
+    async function fetchRates() {
+      try {
+        const res = await fetch("https://api.binance.com/api/v3/ticker/price");
+        const data = await res.json();
+
+        const ratesList = document.getElementById("rates-list");
+        symbols.forEach(sym => {
+          const coin = data.find(item => item.symbol === sym);
+          if (coin) {
+            const el = ratesList.querySelector(`[alt="${sym.replace('USDT', '')}"]`).closest(".rate");
+            el.querySelector("span:last-child").textContent = `$${parseFloat(coin.price).toFixed(2)}`;
+          }
+        });
+      } catch (err) {
+        console.error("Ошибка получения данных Binance:", err);
+      }
+    }
+
+    fetchRates();
+    setInterval(fetchRates, 60000); // обновление каждую минуту
+
+    // кнопка QR
+    document.getElementById("qrButton").addEventListener("click", () => {
+      window.open("https://www.qr-code-generator.com/", "_blank");
+    });
+
+    // анимация кнопок
     document.querySelectorAll('.btn').forEach(btn => {
       btn.addEventListener('click', () => {
         btn.style.animation = 'press 0.3s ease';
