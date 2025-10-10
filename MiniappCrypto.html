@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crypto MiniApp</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: #0e0e10;
+      color: #e5e5e5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .app {
+      background: #18181b;
+      border-radius: 20px;
+      padding: 24px;
+      width: 320px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .app:hover {
+      transform: translateY(-2px);
+    }
+
+    .profile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 0 12px rgba(79, 70, 229, 0.5);
+      margin-bottom: 10px;
+      transition: transform 0.3s ease;
+    }
+
+    .avatar:hover {
+      transform: scale(1.05);
+    }
+
+    .name {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .balance {
+      font-size: 28px;
+      font-weight: 600;
+      margin: 10px 0 4px 0;
+    }
+
+    .subtext {
+      font-size: 13px;
+      color: #a1a1aa;
+      margin-bottom: 20px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      flex: 1;
+      background: #27272a;
+      border: none;
+      border-radius: 12px;
+      color: #e5e5e5;
+      font-size: 14px;
+      padding: 10px 0;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .btn:hover {
+      background: #3f3f46;
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+      background: #52525b;
+    }
+
+    .footer-card {
+      background: #27272a;
+      border-radius: 14px;
+      padding: 12px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background 0.25s ease;
+    }
+
+    .footer-card:hover {
+      background: #323236;
+    }
+
+    .footer-text {
+      font-size: 13px;
+      color: #a1a1aa;
+    }
+
+    .footer-icon {
+      color: #818cf8;
+      font-size: 20px;
+    }
+
+    @keyframes press {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="profile">
+      <div class="avatar">Y</div>
+      <div class="name">Yipir</div>
+    </div>
+
+    <div class="balance">$0</div>
+    <div class="subtext">Общий баланс в USD</div>
+
+    <div class="buttons">
+      <button class="btn">Пополнить</button>
+      <button class="btn">Вывести</button>
+      <button class="btn">Обмен</button>
+      <button class="btn">Биржа</button>
+    </div>
+
+    <div class="footer-card">
+      <div class="footer-text">Оплата по QR-коду<br><small>Оплачивайте покупки с помощью криптовалюты</small></div>
+      <div class="footer-icon">➜</div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.style.animation = 'press 0.3s ease';
+        btn.addEventListener('animationend', () => {
+          btn.style.animation = '';
+        });
+      });
+    });
+  </script>
+</body>
+</html>
