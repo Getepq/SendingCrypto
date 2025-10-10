@@ -1,167 +1,489 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SendingCrypto</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Crypto MiniApp</title>
+  <meta name="color-scheme" content="dark">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
+    :root{
+      --bg-a:#000000;
+      --bg-b:#2b0a3a;
+      --panel:#0f1114;
+      --muted:#9aa0a6;
+      --card:rgba(255,255,255,0.03);
+      --accent1:#6d28d9;
+      --accent2:#06b6d4;
+      --success:#10b981;
+      --danger:#ef4444;
     }
-    body {
-      background: #0d0d0f;
-      color: white;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; -webkit-font-smoothing:antialiased; background: linear-gradient(180deg,var(--bg-a), var(--bg-b)); color:#e6eef8}
+    /* ---------- LOADER ---------- */
+    #loader {
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background:#000; z-index:9999; transition:opacity .8s ease, visibility .8s;
     }
-    .app {
-      width: 100%;
-      max-width: 420px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      align-items: center;
-      animation: fadeIn 0.6s ease;
+    #loader.fadeout{ opacity:0; visibility:hidden; pointer-events:none; }
+    #loader .bird {
+      width:200px; height:200px; background-image: url('data:image/png;base64,REPLACE_BASE64_BIRD');
+      background-size:contain; background-repeat:no-repeat; background-position:center;
+      filter:brightness(0) invert(1); /* make icon white */
+      opacity:1; transition:opacity .8s ease;
     }
-    .card {
-      background: #16161a;
-      border-radius: 20px;
-      padding: 24px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 0 25px rgba(0,0,0,0.4);
-      transition: all 0.3s ease;
+
+    /* ---------- APP (hidden initially) ---------- */
+    .app-viewport{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:12px; opacity:0; transform:translateY(8px); transition:opacity .45s ease, transform .45s ease;}
+    .app-viewport.show{opacity:1; transform:none}
+    .app{
+      width:100%; max-width:420px; height:calc(100vh - 24px); border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)), linear-gradient(180deg, var(--panel), rgba(17,18,23,0.98));
+      box-shadow:0 18px 40px rgba(2,6,23,0.7); padding:16px; display:flex; flex-direction:column; gap:12px; overflow:auto;
     }
-    .card:hover {
-      transform: scale(1.01);
+
+    /* header */
+    .header { display:flex; align-items:center; justify-content:space-between; gap:12px }
+    .profile { display:flex; gap:12px; align-items:center }
+    .avatar { width:88px; height:88px; border-radius:50%; background:linear-gradient(135deg,var(--accent1),var(--accent2)); display:flex; align-items:center; justify-content:center; overflow:hidden; font-weight:800; font-size:32px; box-shadow:0 8px 28px rgba(109,40,217,0.12) }
+    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .profile-info{display:flex;flex-direction:column}
+    .username{font-size:18px; font-weight:800}
+    .small-muted{font-size:12px;color:var(--muted); margin-top:6px}
+
+    /* language pill */
+    .lang-pill{background:var(--card); padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center}
+    .lang-menu{position:relative}
+    .lang-menu .menu{position:absolute; right:0; top:calc(100% + 8px); width:140px; background:var(--card); border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,0.6); opacity:0; transform:translateY(-8px) scale(.98); transition:opacity .18s ease, transform .22s cubic-bezier(.2,.9,.2,1); pointer-events:none}
+    .lang-menu.show .menu{opacity:1; transform:translateY(0) scale(1); pointer-events:auto}
+    .menu button{display:block; width:100%; padding:10px 12px; background:transparent; border:none; color:#eaf3ff; text-align:left; cursor:pointer; font-weight:700}
+    .menu button:hover{background:rgba(255,255,255,0.02)}
+
+    /* balance */
+    .balance-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+    .balance-amount{font-size:34px;font-weight:900}
+    .balance-sub{color:var(--muted); font-size:13px}
+
+    /* fiat pills */
+    .fiat-row{display:flex; gap:8px; justify-content:center; flex-wrap:wrap}
+    .fiat-btn{background:transparent; border:1px solid rgba(255,255,255,0.06); color:#eaf3ff; padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:800; display:inline-flex; align-items:center; gap:8px; transition:all .16s ease; min-width:86px; justify-content:center}
+    .fiat-btn.active{background:linear-gradient(90deg, rgba(109,40,217,0.12), rgba(6,182,212,0.06)); border:1px solid rgba(109,40,217,0.18); transform:translateY(-3px)}
+    .fiat-btn .sym{font-weight:900}
+
+    /* actions: square buttons like on screenshot */
+    .actions{display:flex; gap:10px; justify-content:space-between}
+    .action-btn{
+      flex:1;
+      background: rgba(255,255,255,0.02);
+      border-radius:12px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+      font-weight:800;
+      transition:transform .14s ease, background .14s;
+      border:2px solid rgba(255,255,255,0.06);
+      min-width:0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.01);
     }
-    .avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      margin: 0 auto 10px;
-      box-shadow: 0 0 15px #3b82f6;
-    }
-    h2 {
-      font-size: 20px;
-      font-weight: 700;
-    }
-    .balance {
-      font-size: 34px;
-      font-weight: 700;
-      margin: 6px 0;
-    }
-    .subtitle {
-      font-size: 13px;
-      color: #aaa;
-    }
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 16px;
-    }
-    .btn {
-      background: #1f1f23;
-      border-radius: 12px;
-      padding: 10px;
-      font-size: 13px;
-      color: #fff;
-      transition: all 0.2s ease;
-    }
-    .btn:hover {
-      background: #2d2d34;
-    }
-    .section {
-      width: 100%;
-      background: #16161a;
-      border-radius: 20px;
-      padding: 18px;
-    }
-    .crypto {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #222;
-    }
-    .crypto:last-child {
-      border-bottom: none;
-    }
-    .crypto img {
-      width: 26px;
-      height: 26px;
-      margin-right: 8px;
-      border-radius: 50%;
-    }
-    .crypto-name {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 600;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .action-btn svg{width:26px;height:26px}
+    .action-btn .icon-wrap{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.03)}
+    .action-btn span{font-size:13px}
+    .action-btn:hover{transform:translateY(-6px); background:rgba(255,255,255,0.035)}
+
+    /* ripple for buttons */
+    .ripple{position:absolute;border-radius:50%; transform:scale(0); animation:rip .6s linear; background:rgba(255,255,255,0.12)}
+    @keyframes rip{to{transform:scale(4); opacity:0}}
+
+    /* QR card (separate) */
+    .qr-card{background:linear-gradient(90deg, rgba(99,102,241,0.06), rgba(6,182,212,0.03)), var(--card); border-radius:12px; padding:12px; display:flex; gap:12px; align-items:center; cursor:pointer; border:1px solid rgba(255,255,255,0.04)}
+    .qr-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent1),var(--accent2)); font-weight:800}
+    .qr-text{font-weight:700}
+    .qr-sub{color:var(--muted); font-size:13px}
+
+    /* full-screen wave overlay (for QR) */
+    #qrWave{ position:fixed; inset:0; pointer-events:none; z-index:9998; overflow:hidden }
+    .full-wave{ position:absolute; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.06); transform:scale(0); transition: transform .85s cubic-bezier(.2,.9,.2,1), opacity .85s ease; opacity:1; }
+
+    /* coins column */
+    .coins-list{display:flex; flex-direction:column; gap:8px; margin-top:8px}
+    .coin-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px; border-radius:10px; background:rgba(255,255,255,0.02)}
+    .coin-left{display:flex; align-items:center; gap:10px}
+    .coin-img{width:36px;height:36px;border-radius:8px; background:#222; display:flex;align-items:center;justify-content:center; overflow:hidden}
+    .coin-img img{width:100%;height:100%;object-fit:contain;display:block}
+    .coin-name{font-weight:800}
+    .coin-sub{font-size:12px;color:var(--muted)}
+    .coin-right{text-align:right}
+    .coin-price{font-weight:800}
+    .coin-change{font-size:12px; display:flex; gap:8px; align-items:center}
+
+    .up{color:var(--success)}
+    .down{color:var(--danger)}
+
+    .footer{margin-top:auto; color:var(--muted); font-size:12px; text-align:center}
+
+    /* responsive tweaks */
+    @media (max-width:420px){
+      .avatar{width:78px;height:78px}
+      .balance-amount{font-size:28px}
+      .action-btn span{font-size:12px}
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="card">
-      <img src="https://i.pravatar.cc/150?img=3" alt="avatar" class="avatar">
-      <h2 id="username">Yipir</h2>
-      <div class="balance" id="balance">$0</div>
-      <div class="subtitle">Общий баланс в USD</div>
-      <div class="buttons">
-        <div class="btn">Пополнить</div>
-        <div class="btn">Вывести</div>
-        <div class="btn">Обмен</div>
-        <div class="btn">Биржа</div>
-      </div>
-    </div>
+  <!-- LOADER: bird on black -->
+  <div id="loader" aria-hidden="false">
+    <div class="bird" id="bird"></div>
+  </div>
 
-    <div class="section" id="crypto-list">
-      <div class="crypto"><div class="crypto-name"><img src="https://cryptologos.cc/logos/toncoin-ton-logo.png"><span>Toncoin (TON)</span></div><span>—</span></div>
-      <div class="crypto"><div class="crypto-name"><img src="https://cryptologos.cc/logos/tether-usdt-logo.png"><span>Tether (USDT)</span></div><span>—</span></div>
-      <div class="crypto"><div class="crypto-name"><img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"><span>Bitcoin (BTC)</span></div><span>—</span></div>
+  <!-- full-screen wave overlay for QR -->
+  <div id="qrWave" aria-hidden="true"></div>
+
+  <!-- MAIN APP (hidden until loader removed) -->
+  <div class="app-viewport" id="appViewport" aria-hidden="true">
+    <div class="app" role="application" aria-label="Crypto MiniApp">
+      <!-- header -->
+      <div class="header">
+        <div class="profile">
+          <div class="avatar" id="avatar">U</div>
+          <div class="profile-info">
+            <div class="username" id="username">Загрузка...</div>
+            <div class="small-muted" id="small-muted">Telegram</div>
+          </div>
+        </div>
+
+        <div class="lang-menu lang-menu-wrapper" id="langWrapper">
+          <div class="lang-pill" id="langPill" role="button" aria-haspopup="true" aria-expanded="false">
+            <span id="langLabel">RU</span> <span style="opacity:.8">▾</span>
+          </div>
+          <div class="menu" id="langMenu" role="menu" aria-hidden="true">
+            <button id="set-ru">Русский — RU</button>
+            <button id="set-en">English — EN</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- balance -->
+      <div class="balance-wrap">
+        <div class="balance-amount" id="balanceAmount">0,00 TRY</div>
+        <div class="balance-sub" id="balanceSub">Общий баланс в TRY</div>
+
+        <div class="fiat-row" id="fiatRow">
+          <button class="fiat-btn active" data-f="try"><span class="sym">₺</span> <span class="code">TRY</span></button>
+          <button class="fiat-btn" data-f="usd"><span class="sym">$</span> <span class="code">USD</span></button>
+          <button class="fiat-btn" data-f="rub"><span class="sym">₽</span> <span class="code">RUB</span></button>
+          <button class="fiat-btn" data-f="eur"><span class="sym">€</span> <span class="code">EUR</span></button>
+          <button class="fiat-btn" data-f="uah"><span class="sym">₴</span> <span class="code">UAH</span></button>
+        </div>
+      </div>
+
+      <!-- actions -->
+      <div class="actions">
+        <button class="action-btn" data-act="deposit" title="Пополнить">
+          <div class="icon-wrap" aria-hidden="true">
+            <!-- plus -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <span id="lbl-deposit">Пополнить</span>
+        </button>
+
+        <button class="action-btn" data-act="withdraw" title="Вывести">
+          <div class="icon-wrap" aria-hidden="true">
+            <!-- minus -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14"/></svg>
+          </div>
+          <span id="lbl-withdraw">Вывести</span>
+        </button>
+
+        <button class="action-btn" data-act="exchange" title="Обмен">
+          <div class="icon-wrap" aria-hidden="true">
+            <!-- exchange -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h11M4 17h11M17 7l4 4-4 4"/></svg>
+          </div>
+          <span id="lbl-exchange">Обмен</span>
+        </button>
+
+        <button class="action-btn" data-act="market" title="Биржа">
+          <div class="icon-wrap" aria-hidden="true">
+            <!-- chart -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/></svg>
+          </div>
+          <span id="lbl-market">Биржа</span>
+        </button>
+      </div>
+
+      <!-- QR card separate -->
+      <div class="qr-card" id="qrCard" role="button" aria-pressed="false">
+        <div class="qr-icon" aria-hidden="true">QR</div>
+        <div style="flex:1">
+          <div class="qr-text" id="qrTitle">Оплата по QR-коду</div>
+          <div class="qr-sub" id="qrSub">Оплачивайте покупки с помощью криптовалюты</div>
+        </div>
+        <div style="color:var(--muted)">➜</div>
+      </div>
+
+      <!-- coins column (with images from CoinGecko) -->
+      <div class="coins-list" id="coinsList" aria-live="polite"></div>
+
+      <div class="footer" id="footer"></div>
     </div>
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    /* ================== CONFIG ================== */
+    const COINS = [
+      { id: 'bitcoin', symbol:'BTC', name:'Bitcoin' },
+      { id: 'ethereum', symbol:'ETH', name:'Ethereum' },
+      { id: 'tether', symbol:'USDT', name:'Tether' },
+      { id: 'solana', symbol:'SOL', name:'Solana' }
+    ];
+    const FIATS = ['usd','rub','eur','try','uah'];
+    const UPDATE_INTERVAL = 300000; // 5 minutes
 
-    async function fetchPrices() {
-      const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,toncoin,tether&vs_currencies=usd");
-      const data = await res.json();
+    // UI refs
+    const loader = document.getElementById('loader');
+    const appViewport = document.getElementById('appViewport');
+    const langPill = document.getElementById('langPill');
+    const langMenu = document.getElementById('langMenu');
+    const langLabel = document.getElementById('langLabel');
+    const setRu = document.getElementById('set-ru');
+    const setEn = document.getElementById('set-en');
+    const usernameEl = document.getElementById('username');
+    const avatarEl = document.getElementById('avatar');
+    const smallMuted = document.getElementById('small-muted');
+    const balanceAmountEl = document.getElementById('balanceAmount');
+    const balanceSubEl = document.getElementById('balanceSub');
+    const fiatBtns = Array.from(document.querySelectorAll('.fiat-btn'));
+    const coinsList = document.getElementById('coinsList');
+    const footer = document.getElementById('footer');
+    const qrCard = document.getElementById('qrCard');
+    const qrWave = document.getElementById('qrWave');
 
-      const cryptoList = document.getElementById("crypto-list");
-      cryptoList.innerHTML = `
-        <div class="crypto">
-          <div class="crypto-name"><img src="https://cryptologos.cc/logos/toncoin-ton-logo.png"><span>Toncoin (TON)</span></div>
-          <span>$${data.toncoin.usd.toLocaleString()}</span>
-        </div>
-        <div class="crypto">
-          <div class="crypto-name"><img src="https://cryptologos.cc/logos/tether-usdt-logo.png"><span>Tether (USDT)</span></div>
-          <span>$${data.tether.usd.toLocaleString()}</span>
-        </div>
-        <div class="crypto">
-          <div class="crypto-name"><img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"><span>Bitcoin (BTC)</span></div>
-          <span>$${data.bitcoin.usd.toLocaleString()}</span>
-        </div>
-      `;
+    let lang = 'ru', locale = 'ru-RU';
+    let selectedFiat = 'try';
+    let userBalanceUSD = 0; // demo balance
+
+    // ===== loader: show bird 2s, fade out, then show app =====
+    function startLoaderThenShowApp(){
+      setTimeout(()=>{
+        loader.classList.add('fadeout');
+        setTimeout(()=>{
+          // reveal app
+          appViewport.classList.add('show');
+          loader.style.display = 'none';
+          appViewport.setAttribute('aria-hidden','false');
+        }, 800);
+      }, 2000); // show bird for 2s
     }
 
-    fetchPrices();
+    // ===== Telegram user info (try to get real user) =====
+    function initTelegramUser(){
+      try {
+        const tg = window.Telegram?.WebApp;
+        if(tg){
+          tg.expand();
+          const u = tg.initDataUnsafe?.user || tg.initData?.user;
+          if(u){
+            usernameEl.textContent = (u.first_name || '') + (u.last_name ? ' ' + u.last_name : '');
+            smallMuted.textContent = u.username ? '@' + u.username : 'Telegram';
+            if(u.photo_url){
+              const img = document.createElement('img');
+              img.src = u.photo_url;
+              img.alt = usernameEl.textContent;
+              avatarEl.textContent = '';
+              avatarEl.appendChild(img);
+            } else {
+              avatarEl.textContent = (u.first_name || 'U').slice(0,1).toUpperCase();
+            }
+            return;
+          }
+        }
+      } catch(e){
+        console.warn('Telegram init error', e);
+      }
+      // fallback
+      usernameEl.textContent = 'Guest (demo)';
+      smallMuted.textContent = 'Demo';
+      avatarEl.textContent = 'G';
+    }
+
+    // ===== language toggles =====
+    langPill.addEventListener('click', ()=>{
+      const parent = langPill.parentElement;
+      parent.classList.toggle('show');
+    });
+    setRu.addEventListener('click', ()=>{ setLanguage('ru'); setTimeout(()=> langPill.parentElement.classList.remove('show'), 20); });
+    setEn.addEventListener('click', ()=>{ setLanguage('en'); setTimeout(()=> langPill.parentElement.classList.remove('show'), 20); });
+
+    function setLanguage(l){
+      lang = l;
+      if(l === 'ru'){
+        locale = 'ru-RU';
+        langLabel.textContent = 'RU';
+        document.getElementById('lbl-deposit').textContent = 'Пополнить';
+        document.getElementById('lbl-withdraw').textContent = 'Вывести';
+        document.getElementById('lbl-exchange').textContent = 'Обмен';
+        document.getElementById('lbl-market').textContent = 'Биржа';
+        document.getElementById('qrTitle').textContent = 'Оплата по QR-коду';
+        document.getElementById('qrSub').textContent = 'Оплачивайте покупки с помощью криптовалюты';
+      } else {
+        locale = 'en-US';
+        langLabel.textContent = 'EN';
+        document.getElementById('lbl-deposit').textContent = 'Deposit';
+        document.getElementById('lbl-withdraw').textContent = 'Withdraw';
+        document.getElementById('lbl-exchange').textContent = 'Exchange';
+        document.getElementById('lbl-market').textContent = 'Market';
+        document.getElementById('qrTitle').textContent = 'Pay via QR code';
+        document.getElementById('qrSub').textContent = 'Pay with cryptocurrency';
+      }
+      updateBalanceDisplay();
+      fetchAndRenderMarkets();
+    }
+
+    // ===== fiat selection =====
+    fiatBtns.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        fiatBtns.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedFiat = btn.dataset.f;
+        updateBalanceDisplay();
+        fetchAndRenderMarkets();
+      });
+    });
+
+    function formatMoney(value, fiat){
+      try {
+        const opts = { style:'currency', currency: fiat.toUpperCase(), maximumFractionDigits: 6 };
+        return new Intl.NumberFormat(locale, opts).format(value);
+      } catch(e){
+        const symbols = { usd:'$', rub:'₽', eur:'€', try:'₺', uah:'₴' };
+        return (symbols[fiat]||'') + Number(value).toFixed(6);
+      }
+    }
+
+    function updateBalanceDisplay(){
+      balanceAmountEl.textContent = formatMoney(userBalanceUSD, selectedFiat);
+      balanceSubEl.textContent = (lang === 'ru') ? `Общий баланс в ${selectedFiat.toUpperCase()}` : `Total balance in ${selectedFiat.toUpperCase()}`;
+    }
+
+    // ===== fetch markets with images (CoinGecko) =====
+    async function fetchMarkets(fiat){
+      const ids = COINS.map(c=>c.id).join(',');
+      const vs = fiat || 'usd';
+      const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${encodeURIComponent(vs)}&ids=${encodeURIComponent(ids)}&order=market_cap_desc&per_page=100&page=1&sparkline=false`;
+      try {
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('Network');
+        const data = await res.json();
+        return data;
+      } catch(err){
+        console.error('fetchMarkets err', err);
+        return null;
+      }
+    }
+
+    function buildCoinRow(coin){
+      const row = document.createElement('div');
+      row.className = 'coin-row';
+      row.innerHTML = `
+        <div class="coin-left">
+          <div class="coin-img" aria-hidden="true"><img src="${coin.image}" alt="${coin.symbol}"></div>
+          <div>
+            <div class="coin-name">${coin.symbol}</div>
+            <div class="coin-sub">${coin.name}</div>
+          </div>
+        </div>
+        <div class="coin-right">
+          <div class="coin-price">${formatMoney(coin.current_price, selectedFiat)}</div>
+          <div class="coin-change"><span class="change-val ${coin.price_change_percentage_24h >= 0 ? 'up' : 'down'}">${coin.price_change_percentage_24h === null ? '—' : (coin.price_change_percentage_24h >= 0 ? '↑' : '↓') + ' ' + Math.abs(coin.price_change_percentage_24h).toFixed(2) + '%'}</span></div>
+        </div>
+      `;
+      return row;
+    }
+
+    async function fetchAndRenderMarkets(){
+      coinsList.innerHTML = '';
+      COINS.forEach(c=>{
+        const ph = document.createElement('div');
+        ph.className = 'coin-row';
+        ph.innerHTML = `<div class="coin-left"><div class="coin-img"></div><div><div class="coin-name">${c.symbol}</div><div class="coin-sub">${c.name}</div></div></div><div class="coin-right"><div class="coin-price">…</div><div class="coin-change"><span class="change-val">—</span></div></div>`;
+        coinsList.appendChild(ph);
+      });
+
+      const data = await fetchMarkets(selectedFiat);
+      if(!data){
+        footer.textContent = (lang === 'ru') ? 'Ошибка загрузки курсов' : 'Failed to load prices';
+        return;
+      }
+      coinsList.innerHTML = '';
+      COINS.forEach(sym=>{
+        const d = data.find(x => x.id === sym.id);
+        if(d) coinsList.appendChild(buildCoinRow(d));
+        else {
+          const ph = document.createElement('div');
+          ph.className = 'coin-row';
+          ph.innerHTML = `<div class="coin-left"><div class="coin-img"></div><div><div class="coin-name">${sym.symbol}</div><div class="coin-sub">${sym.name}</div></div></div><div class="coin-right"><div class="coin-price">—</div><div class="coin-change"><span class="change-val">—</span></div></div>`;
+          coinsList.appendChild(ph);
+        }
+      });
+      footer.textContent = ''; // we don't show timestamp
+    }
+
+    // initial fetch & interval
+    fetchAndRenderMarkets();
+    updateBalanceDisplay();
+    setInterval(fetchAndRenderMarkets, UPDATE_INTERVAL);
+
+    // ===== button ripple for action buttons (small) =====
+    document.querySelectorAll('.action-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const rect = btn.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        const size = Math.max(rect.width, rect.height) * 1.2;
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+        ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+        btn.appendChild(ripple);
+        setTimeout(()=> ripple.remove(), 700);
+      });
+    });
+
+    // ===== QR: full-screen wave =====
+    qrCard.addEventListener('click', (e)=>{
+      // compute client coordinates
+      const x = e.clientX;
+      const y = e.clientY;
+      // create wave
+      const wave = document.createElement('div');
+      wave.className = 'full-wave';
+      // position wave center where clicked
+      wave.style.left = (x - 100) + 'px';
+      wave.style.top = (y - 100) + 'px';
+      qrWave.appendChild(wave);
+      // trigger scale
+      requestAnimationFrame(()=> {
+        wave.style.transform = 'scale(30)';
+        wave.style.opacity = '0';
+      });
+      // remove after animation
+      setTimeout(()=> {
+        wave.remove();
+      }, 900);
+    });
+
+    // ===== init: telegram user & loader start =====
+    document.addEventListener('DOMContentLoaded', ()=>{
+      initTelegramUser();
+      startLoaderThenShowApp();
+    });
+
+    // default language RU
+    setLanguage('ru');
+
   </script>
 </body>
 </html>
