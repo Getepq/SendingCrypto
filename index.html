@@ -3,100 +3,105 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SendingCrypto Bot — исправлено</title>
+  <title>SendingCrypto Bot</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-  <!-- Telegram WebApp SDK (опционально) -->
+  <!-- Telegram SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg-1: #14192a;
-      --bg-2: #1b2236;
-      --card: rgba(23,28,46,0.65);
-      --glow: rgba(168,85,247,0.28);
-      --accent: #a78bfa;
+      --bg1: #14192a;
+      --bg2: #1b2236;
+      --glass: rgba(255, 255, 255, 0.06);
+      --border: rgba(255, 255, 255, 0.08);
+      --glow: rgba(167, 139, 250, 0.4);
     }
 
-    html,body { height: 100%; }
     body {
-      background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
-      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      color: #fff;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      font-family: 'Inter', sans-serif;
+      color: white;
       min-height: 100vh;
     }
 
     .glass {
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      background-color: var(--card);
-      backdrop-filter: blur(8px) saturate(120%);
-      border: 1px solid rgba(255,255,255,0.04);
-      border-radius: 14px;
-      transition: box-shadow .22s ease, transform .12s ease;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+      background: var(--glass);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      transition: all 0.25s ease;
     }
-    .glass:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.45); }
+
+    .glass:hover {
+      box-shadow: 0 0 10px var(--glow);
+    }
 
     .btn-glow {
-      transition: transform .12s ease, box-shadow .12s ease;
+      transition: all 0.2s ease;
     }
-    .btn-glow:hover { transform: translateY(-4px); box-shadow: 0 8px 26px var(--glow); }
-    .btn-glow:active { transform: translateY(-1px) scale(.995); }
 
-    /* toast */
+    .btn-glow:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 15px var(--glow);
+    }
+
+    .btn-glow:active {
+      transform: scale(0.97);
+    }
+
     #toast {
       position: fixed;
+      bottom: 24px;
       left: 50%;
-      bottom: 28px;
       transform: translateX(-50%);
-      background: rgba(17,24,39,0.9);
-      padding: 10px 16px;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 12px rgba(167,139,250,0.12);
+      background: rgba(55, 65, 81, 0.85);
       color: #fff;
+      padding: 10px 18px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
       font-size: 14px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity .25s ease, transform .25s ease;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
 
-    /* small helpers */
-    .icon-purple { color: var(--accent); } /* для svg stroke-current */
+    #toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
   </style>
 </head>
-<body class="antialiased">
+<body class="antialiased text-white">
 
-  <main class="min-h-screen flex items-start justify-center p-5">
-    <div class="w-full max-w-sm space-y-4">
+  <main class="min-h-screen flex justify-center p-4">
+    <div class="w-full max-w-sm space-y-5">
 
-      <!-- Top -->
+      <!-- Профиль -->
       <div class="glass p-4 flex items-center gap-3">
         <img id="user-photo" src="https://via.placeholder.com/80" alt="avatar"
-          class="w-12 h-12 rounded-full border border-white/10 object-cover shrink-0">
-        <div class="flex-1 min-w-0">
-          <div id="user-name" class="text-sm font-semibold leading-tight truncate">Гость</div>
-          <div class="text-xs text-white/60 leading-tight">Crypto Bot</div>
+          class="w-12 h-12 rounded-full border border-white/10 object-cover">
+        <div class="flex-1">
+          <div id="user-name" class="text-sm font-semibold">Гость</div>
         </div>
-        <button class="p-2 rounded-full bg-white/6 hover:bg-white/8 btn-glow">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="stroke-current">
-            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <button class="p-2 rounded-full bg-white/5 hover:bg-white/10 btn-glow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </button>
       </div>
 
-      <!-- Balance -->
-      <div class="glass text-center py-6 px-4">
-        <div class="flex items-center justify-center gap-3">
+      <!-- Баланс -->
+      <div class="glass text-center py-6">
+        <div class="flex justify-center items-center gap-3">
           <div id="balance-amount" class="text-3xl font-extrabold">$0</div>
-          <button id="toggle-balance" class="p-2 rounded-full bg-white/6 hover:bg-white/8 btn-glow flex items-center justify-center">
-            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" class="stroke-current">
-              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          <button id="toggle-balance" class="p-2 rounded-full bg-white/5 hover:bg-white/10 btn-glow">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.3"/>
               <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.3"/>
             </svg>
           </button>
@@ -104,67 +109,59 @@
         <div class="text-xs text-white/60 mt-2">Общий баланс в USD</div>
       </div>
 
-      <!-- Actions -->
-      <div class="grid grid-cols-4 gap-3">
-        <!-- Button template: fixed-height container, icon centered, label below -->
+      <!-- Кнопки действий -->
+      <div class="grid grid-cols-4 gap-3 text-center">
+        <!-- Пополнить -->
         <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
-          <div class="w-8 h-8 rounded-md flex items-center justify-center icon-purple">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="stroke-current">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+          </svg>
           <div class="text-xs">Пополнить</div>
         </button>
 
+        <!-- Вывести -->
         <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
-          <div class="w-8 h-8 rounded-md flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="stroke-current icon-purple">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
-          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" d="M5 12h14" />
+          </svg>
           <div class="text-xs">Вывести</div>
         </button>
 
+        <!-- Обмен -->
         <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
-          <div class="w-8 h-8 rounded-md flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="stroke-current icon-purple">
-              <path d="M21 12h-6M3 12h6M12 3v6M12 21v-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
-          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 3v5h5M8 21v-5H3M21 8l-5-5M3 16l5 5" />
+          </svg>
           <div class="text-xs">Обмен</div>
         </button>
 
+        <!-- Биржа -->
         <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
-          <div class="w-8 h-8 rounded-md flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="stroke-current icon-purple">
-              <path d="M6 9l6-6 6 6M6 15l6 6 6-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
-          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 17l4-4 4 4 8-8" />
+          </svg>
           <div class="text-xs">Биржа</div>
         </button>
       </div>
 
-      <!-- QR pay -->
-      <div class="glass p-4 flex items-center justify-between rounded-xl btn-glow cursor-pointer" onclick="showToast()">
-        <div class="min-w-0">
+      <!-- QR -->
+      <div class="glass p-4 flex justify-between items-center btn-glow cursor-pointer" onclick="showToast()">
+        <div>
           <div class="text-sm font-semibold">Оплата по QR-коду</div>
-          <div class="text-xs text-white/60 truncate">Оплачивайте покупки с помощью криптовалюты</div>
+          <div class="text-xs text-white/60">Оплачивайте покупки с помощью криптовалюты</div>
         </div>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="stroke-current text-white/70">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <path d="M13 7l5 5-5 5M6 7h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
         </svg>
       </div>
 
-      <!-- Assets header -->
-      <div class="flex justify-between items-center text-sm text-white/60">
+      <!-- Активы -->
+      <div class="text-sm text-white/60 flex justify-between">
         <span>Активы</span>
-        <button class="text-sky-400 text-xs" onclick="showToast()">Скрыть мелкие балансы</button>
+        <span class="text-sky-400 cursor-pointer" onclick="showToast()">Скрыть мелкие балансы</span>
       </div>
 
-      <!-- Assets list -->
-      <div id="assets" class="space-y-3">
-        <!-- наполняется скриптом -->
-      </div>
+      <div id="assets" class="space-y-3"></div>
 
     </div>
   </main>
@@ -176,85 +173,59 @@
     function showToast() {
       const toast = document.getElementById('toast');
       toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2000);
+      setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    // assets data
+    // Fetch asset prices
     const assets = [
       { id: 'tether', label: 'Tether', symbol: 'USDT' },
       { id: 'toncoin', label: 'Toncoin', symbol: 'TON' },
-      { id: 'solana', label: 'Solana', symbol: 'SOL' }
+      { id: 'solana', label: 'Solana', symbol: 'SOL' },
     ];
 
     const money = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
     async function fetchPrices() {
-      try {
-        const ids = assets.map(a => a.id).join(',');
-        const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Network error');
-        const data = await res.json();
+      const ids = assets.map(a => a.id).join(',');
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const container = document.getElementById('assets');
+      container.innerHTML = '';
 
-        const container = document.getElementById('assets');
-        container.innerHTML = '';
-
-        assets.forEach(a => {
-          const info = data[a.id] || {};
-          const price = info.usd ?? 0;
-          const change = info.usd_24h_change ?? 0;
-          const positive = change >= 0;
-
-          const el = document.createElement('div');
-          el.className = 'glass p-4 flex items-center justify-between rounded-2xl btn-glow';
-          el.innerHTML = `
-            <div class="min-w-0">
-              <div class="font-semibold">${a.label}</div>
-              <div class="text-xs text-white/60">${money(price)} <span class="${positive ? 'text-green-400' : 'text-red-400'}">${change.toFixed(2)}%</span></div>
+      assets.forEach(a => {
+        const info = data[a.id];
+        const price = info?.usd ?? 0;
+        const change = info?.usd_24h_change ?? 0;
+        const el = document.createElement('div');
+        el.className = 'glass p-4 flex justify-between items-center rounded-2xl btn-glow';
+        el.innerHTML = `
+          <div>
+            <div class="font-semibold">${a.label}</div>
+            <div class="text-xs text-white/60">${money(price)} 
+              <span class="${change >= 0 ? 'text-green-400' : 'text-red-400'}">${change.toFixed(2)}%</span>
             </div>
-            <div class="text-right min-w-[86px]">
-              <div class="text-sm font-medium">0 ${a.symbol}</div>
-              <div class="text-xs text-white/60">$0</div>
-            </div>
-          `;
-          container.appendChild(el);
-        });
-      } catch (e) {
-        console.warn('Не удалось получить цены:', e);
-        // если API упал — показать заглушки
-        const container = document.getElementById('assets');
-        container.innerHTML = '';
-        assets.forEach(a => {
-          const el = document.createElement('div');
-          el.className = 'glass p-4 flex items-center justify-between rounded-2xl btn-glow';
-          el.innerHTML = `
-            <div class="min-w-0">
-              <div class="font-semibold">${a.label}</div>
-              <div class="text-xs text-white/60">—</div>
-            </div>
-            <div class="text-right min-w-[86px]">
-              <div class="text-sm font-medium">0 ${a.symbol}</div>
-              <div class="text-xs text-white/60">$0</div>
-            </div>
-          `;
-          container.appendChild(el);
-        });
-      }
+          </div>
+          <div class="text-right">
+            <div class="text-sm font-medium">0 ${a.symbol}</div>
+            <div class="text-xs text-white/60">$0</div>
+          </div>`;
+        container.appendChild(el);
+      });
     }
 
     fetchPrices();
 
-    // Telegram WebApp init (если доступно)
+    // Telegram WebApp user info
     (function initTelegram(){
       const tg = window.Telegram?.WebApp;
       if (!tg) return;
       const user = tg.initDataUnsafe?.user;
       if (user) {
-        document.getElementById('user-name').textContent = (user.first_name || '') + (user.last_name ? (' ' + user.last_name) : '');
+        document.getElementById('user-name').textContent = user.first_name || 'Пользователь';
         if (user.photo_url) document.getElementById('user-photo').src = user.photo_url;
       }
     })();
   </script>
-
 </body>
 </html>
