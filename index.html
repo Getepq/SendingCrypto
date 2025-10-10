@@ -141,13 +141,14 @@
     .fiat-btn.active{background:linear-gradient(90deg, rgba(109,40,217,0.12), rgba(6,182,212,0.06)); border:1px solid rgba(109,40,217,0.18); transform:translateY(-4px)}
     .fiat-btn:active{transform:scale(.98)}
 
-    /* actions row (four buttons) */
-    .actions{display:flex; gap:10px; padding:8px; justify-content:space-between; margin-top:6px}
+    /* NEW: Modern action buttons */
+    .actions{display:flex; gap:8px; padding:8px; justify-content:space-between; margin-top:6px; flex-wrap:wrap}
     .action-btn{
       flex:1;
+      min-width:calc(50% - 4px);
       background: rgba(255,255,255,0.02);
-      border-radius:12px;
-      padding:12px 8px;
+      border-radius:16px;
+      padding:16px 12px;
       border:none;
       color:#eef6ff;
       display:flex;
@@ -157,34 +158,114 @@
       cursor:pointer;
       position:relative;
       overflow:hidden;
-      transition:transform .16s ease, background .16s linear;
-      min-width:0;
+      transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .action-btn svg{width:20px; height:20px; opacity:0.95}
-    .action-btn span{font-size:13px; font-weight:700}
-    .action-btn:hover{transform:translateY(-6px); background: rgba(255,255,255,0.035)}
-    .action-btn:active{transform:scale(.98)}
+    .action-btn:hover{
+      transform:translateY(-4px);
+      background: rgba(255,255,255,0.035);
+      border-color: rgba(109,40,217,0.2);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .action-btn:active{transform:scale(0.98)}
+    .action-btn svg{
+      width:24px;
+      height:24px;
+      opacity:0.9;
+      transition: transform .2s ease;
+    }
+    .action-btn:hover svg{
+      transform: scale(1.1);
+    }
+    .action-btn span{
+      font-size:13px;
+      font-weight:700;
+      background: linear-gradient(90deg, #eef6ff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-    /* ripple */
-    .ripple{position:absolute; border-radius:50%; transform:scale(0); animation:rippleAnim .6s linear; background:rgba(255,255,255,0.12)}
-    @keyframes rippleAnim{to{transform:scale(4); opacity:0}}
+    /* NEW: QR Button as separate element */
+    .qr-btn{
+      background: linear-gradient(135deg, rgba(109,40,217,0.1), rgba(6,182,212,0.05));
+      border-radius:16px;
+      padding:16px;
+      border: 1px solid rgba(109,40,217,0.15);
+      color:#eef6ff;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      cursor:pointer;
+      transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top:6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .qr-btn:hover{
+      transform:translateY(-4px);
+      border-color: rgba(109,40,217,0.3);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .qr-btn:active{transform:scale(0.98)}
+    .qr-icon{
+      width:44px;
+      height:44px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(135deg,var(--accent1),var(--accent2));
+      color:white;
+      font-weight:800;
+      flex-shrink:0;
+    }
+    .qr-content{display:flex; flex-direction:column; flex:1}
+    .qr-title{font-weight:700; font-size:16px}
+    .qr-sub{font-size:13px; color:var(--muted)}
+    .qr-arrow{color:var(--muted); font-weight:700; font-size:18px}
 
-    /* info card */
-    .info-card{display:flex; gap:12px; align-items:center; background:linear-gradient(90deg, rgba(99,102,241,0.04), rgba(6,182,212,0.03)), rgba(255,255,255,0.02); padding:12px; border-radius:12px; margin-top:6px}
-    .info-title{font-weight:700}
-    .info-sub{font-size:13px; color:var(--muted)}
-
-    /* markets grid 2 per row */
-    .markets-grid{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px}
-    .coin-card{background: rgba(255,255,255,0.02); padding:10px; border-radius:10px; display:flex; align-items:center; justify-content:space-between; gap:8px}
-    .coin-left{display:flex; gap:10px; align-items:center}
-    .coin-icon{width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:#fff}
+    /* NEW: Vertical coins list */
+    .coins-list{display:flex; flex-direction:column; gap:8px; margin-top:10px}
+    .coin-row{
+      background: rgba(255,255,255,0.02);
+      padding:14px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      transition: all .2s ease;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .coin-row:hover{
+      background: rgba(255,255,255,0.03);
+      transform:translateY(-2px);
+    }
+    .coin-left{display:flex; gap:12px; align-items:center; flex:1}
+    .coin-icon{
+      width:44px;
+      height:44px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      font-size:14px;
+      overflow:hidden;
+      flex-shrink:0;
+    }
+    .coin-icon img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
     .coin-info{display:flex; flex-direction:column}
-    .coin-name{font-weight:800; font-size:13px}
-    .coin-sub{font-size:12px; color:var(--muted)}
-    .coin-right{text-align:right}
-    .coin-price{font-weight:800}
-    .coin-change{font-size:12px; display:flex; align-items:center; gap:6px; justify-content:flex-end}
+    .coin-name{font-weight:800; font-size:15px}
+    .coin-sub{font-size:13px; color:var(--muted)}
+    .coin-right{text-align:right; display:flex; flex-direction:column; gap:4px}
+    .coin-price{font-weight:800; font-size:15px}
+    .coin-change{font-size:13px; display:flex; align-items:center; gap:6px; justify-content:flex-end}
 
     .up{color:var(--success)}
     .down{color:var(--danger)}
@@ -197,6 +278,7 @@
       .avatar{width:86px; height:86px; min-width:86px; min-height:86px}
       .balance-amount{font-size:30px}
       .actions{gap:8px}
+      .action-btn{min-width:calc(50% - 4px); padding:14px 10px}
       .action-btn span{font-size:12px}
     }
   </style>
@@ -243,7 +325,7 @@
         </div>
       </div>
 
-      <!-- actions -->
+      <!-- NEW: Modern action buttons -->
       <div class="actions" aria-hidden="false">
         <button class="action-btn" data-act="deposit" title="Пополнить">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5"></path></svg>
@@ -263,19 +345,19 @@
         </button>
       </div>
 
-      <!-- info -->
-      <div class="info-card">
-        <div style="width:44px; height:44px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:white; font-weight:800">QR</div>
-        <div>
-          <div class="info-title" id="qrTitle">Оплата по QR-коду</div>
-          <div class="info-sub" id="qrSub">Оплачивайте покупки с помощью криптовалюты</div>
+      <!-- NEW: QR button as separate element -->
+      <div class="qr-btn" id="qrButton">
+        <div class="qr-icon">QR</div>
+        <div class="qr-content">
+          <div class="qr-title" id="qrTitle">Оплата по QR-коду</div>
+          <div class="qr-sub" id="qrSub">Оплачивайте покупки с помощью криптовалюты</div>
         </div>
-        <div style="margin-left:auto; color:var(--muted); font-weight:700">➜</div>
+        <div class="qr-arrow">➜</div>
       </div>
 
-      <!-- markets grid (2 per row) -->
-      <div class="markets-grid" id="marketsGrid" aria-live="polite">
-        <!-- cards will be injected here -->
+      <!-- NEW: Vertical coins list -->
+      <div class="coins-list" id="coinsList" aria-live="polite">
+        <!-- coin rows will be injected here -->
       </div>
 
       <div class="footer" id="footer">Обновлено: —</div>
@@ -285,10 +367,10 @@
   <script>
     /* ====== CONFIG ====== */
     const COINS = [
-      { id: 'bitcoin', symbol: 'BTC' },
-      { id: 'ethereum', symbol: 'ETH' },
-      { id: 'tether', symbol: 'USDT' },
-      { id: 'solana', symbol: 'SOL' }
+      { id: 'bitcoin', symbol: 'btc' },
+      { id: 'ethereum', symbol: 'eth' },
+      { id: 'tether', symbol: 'usdt' },
+      { id: 'solana', symbol: 'sol' }
     ];
     const FIATS = ['usd','rub','eur','try','uah'];
     const UPDATE_INTERVAL = 30000; // 30s
@@ -300,11 +382,12 @@
     const balanceAmountEl = document.getElementById('balanceAmount');
     const balanceSubEl = document.getElementById('balanceSub');
     const fiatBtns = Array.from(document.querySelectorAll('.fiat-btn'));
-    const marketsGrid = document.getElementById('marketsGrid');
+    const coinsList = document.getElementById('coinsList');
     const footerEl = document.getElementById('footer');
     const langPill = document.getElementById('langPill');
     const langMenu = document.getElementById('langMenu');
     const langLabel = document.getElementById('langLabel');
+    const qrButton = document.getElementById('qrButton');
 
     let lang = 'ru';
     let locale = 'ru-RU';
@@ -360,18 +443,20 @@
       }
     }
 
-    /* ====== Build initial coin cards (placeholders) ====== */
-    function buildInitialMarkets(){
-      marketsGrid.innerHTML = '';
+    /* ====== Build initial coin rows (placeholders) ====== */
+    function buildInitialCoins(){
+      coinsList.innerHTML = '';
       COINS.forEach(c=>{
-        const card = document.createElement('div');
-        card.className = 'coin-card';
-        card.dataset.coin = c.id;
-        card.innerHTML = `
+        const row = document.createElement('div');
+        row.className = 'coin-row';
+        row.dataset.coin = c.id;
+        row.innerHTML = `
           <div class="coin-left">
-            <div class="coin-icon">${c.symbol}</div>
+            <div class="coin-icon">
+              <img src="https://coinicons-api.vercel.app/api/icon/${c.symbol}" alt="${c.id}" onerror="this.style.display='none'; this.parentNode.innerHTML='${c.symbol}'; this.parentNode.style.background='linear-gradient(135deg,var(--accent1),var(--accent2))'; this.parentNode.style.color='white'">
+            </div>
             <div class="coin-info">
-              <div class="coin-name">${c.symbol}</div>
+              <div class="coin-name">${c.symbol.toUpperCase()}</div>
               <div class="coin-sub">${c.id}</div>
             </div>
           </div>
@@ -380,10 +465,10 @@
             <div class="coin-change"><span class="change-val">—</span></div>
           </div>
         `;
-        marketsGrid.appendChild(card);
+        coinsList.appendChild(row);
       });
     }
-    buildInitialMarkets();
+    buildInitialCoins();
 
     /* ====== Fetch prices from CoinGecko ====== */
     async function fetchPrices(){
@@ -405,16 +490,16 @@
     async function updatePrices(){
       const data = await fetchPrices();
       if(!data){
-        document.querySelectorAll('.coin-card').forEach(card=>{
-          card.querySelector('.coin-price').textContent = '—';
-          card.querySelector('.change-val').textContent = 'err';
+        document.querySelectorAll('.coin-row').forEach(row=>{
+          row.querySelector('.coin-price').textContent = '—';
+          row.querySelector('.change-val').textContent = 'err';
         });
         footerEl.textContent = `${lang === 'ru' ? 'Ошибка обновления' : 'Update error' }`;
         return;
       }
       COINS.forEach(c=>{
-        const card = document.querySelector(`.coin-card[data-coin="${c.id}"]`);
-        if(!card) return;
+        const row = document.querySelector(`.coin-row[data-coin="${c.id}"]`);
+        if(!row) return;
         const priceObj = data[c.id];
         if(!priceObj) return;
         const raw = priceObj[selectedFiat];
@@ -423,8 +508,8 @@
         // format
         const formatted = formatMoney(raw, selectedFiat);
 
-        card.querySelector('.coin-price').textContent = formatted;
-        const changeEl = card.querySelector('.change-val');
+        row.querySelector('.coin-price').textContent = formatted;
+        const changeEl = row.querySelector('.change-val');
         const arrow = change >= 0 ? '↑' : '↓';
         changeEl.textContent = `${arrow} ${Math.abs(change).toFixed(2)}%`;
         changeEl.classList.remove('up','down');
@@ -433,10 +518,10 @@
         // flash if changed
         const last = lastPrices[c.id];
         if(last !== undefined && last !== raw){
-          card.animate([
-            { background: 'rgba(255,255,255,0.00)' },
+          row.animate([
+            { background: 'rgba(255,255,255,0.02)' },
             { background: raw > last ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)' },
-            { background: 'rgba(255,255,255,0.00)' }
+            { background: 'rgba(255,255,255,0.02)' }
           ], { duration:700, easing:'ease-out' });
         }
         lastPrices[c.id] = raw;
@@ -467,20 +552,22 @@
     /* ====== Action buttons ripple effect (UI-only) ====== */
     document.querySelectorAll('.action-btn').forEach(btn=>{
       btn.addEventListener('click', (e)=>{
-        const rect = btn.getBoundingClientRect();
-        const ripple = document.createElement('span');
-        ripple.className = 'ripple';
-        const size = Math.max(rect.width, rect.height) * 1.2;
-        ripple.style.width = ripple.style.height = size + 'px';
-        ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
-        ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
-        btn.appendChild(ripple);
-        setTimeout(()=> ripple.remove(), 700);
-
-        // small press animation of info card to show feedback
-        const info = document.querySelector('.info-card');
-        if(info) info.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-6px)' }, { transform: 'translateY(0)' }], { duration:220, easing:'ease-out' });
+        // small press animation
+        btn.animate([
+          { transform: 'translateY(0)' },
+          { transform: 'translateY(-6px)' },
+          { transform: 'translateY(0)' }
+        ], { duration:220, easing:'ease-out' });
       });
+    });
+
+    /* ====== QR Button animation ====== */
+    qrButton.addEventListener('click', (e)=>{
+      qrButton.animate([
+        { transform: 'translateY(0)' },
+        { transform: 'translateY(-6px)' },
+        { transform: 'translateY(0)' }
+      ], { duration:220, easing:'ease-out' });
     });
 
     /* ====== Language pill toggling (fade+slide) ====== */
