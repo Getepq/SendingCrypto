@@ -25,7 +25,7 @@ body {
   -moz-osx-font-smoothing:grayscale;
 }
 
-/* Card glass */
+/* --- Glassmorphism блоки --- */
 .glass {
   background: var(--glass);
   backdrop-filter: blur(16px) saturate(150%);
@@ -34,19 +34,13 @@ body {
   box-shadow: 0 10px 30px rgba(2,6,23,0.6);
   transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
 }
-
-/* hover lift */
 .glass:hover {
   transform: translateY(-4px);
   border-color: rgba(255,255,255,0.12);
   box-shadow: 0 18px 40px rgba(6,16,64,0.55);
 }
 
-/* Buttons */
-.btn-glow {
-  transition: all 0.24s ease;
-}
-.btn-glow:active { transform: scale(.98); }
+/* --- Кнопки --- */
 .btn-primary {
   background: linear-gradient(90deg, rgba(96,165,250,0.14), rgba(59,130,246,0.16));
   border: 1px solid rgba(96,165,250,0.12);
@@ -55,30 +49,76 @@ body {
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(59,130,246,0.08);
+  transition: all 0.25s ease;
 }
 .btn-primary:hover {
-  box-shadow: 0 14px 36px rgba(59,130,246,0.14);
-  transform: translateY(-2px);
+  box-shadow: 0 0 14px rgba(59,130,246,0.25);
+  transform: translateY(-1px);
 }
 
-/* Panel */
-#ton-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; z-index: 9999; align-items: flex-end; justify-content: center; }
-#ton-panel.active { display: flex; }
-.panel-content { width: 100%; max-width: 520px; background: var(--glass); border-radius: 24px 24px 0 0; padding: 24px; box-shadow: 0 -6px 40px rgba(0,0,0,0.6); border: 1px solid var(--border); }
+/* --- Панель подключения TON --- */
+#ton-panel {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: none;
+  z-index: 50;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+#ton-panel.active {
+  display: flex;
+  opacity: 1;
+}
+.panel-content {
+  width: 100%;
+  max-width: 520px;
+  background: var(--glass);
+  border-radius: 24px 24px 0 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 -6px 40px rgba(0,0,0,0.6);
+}
 
-/* Balance glow */
+/* --- Анимация успешного подключения --- */
+#success-banner {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: linear-gradient(135deg, rgba(96,165,250,0.25), rgba(59,130,246,0.3));
+  border: 1px solid rgba(59,130,246,0.4);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  font-weight: 600;
+  padding: 14px 26px;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(59,130,246,0.3);
+  opacity: 0;
+  transition: all 0.6s ease;
+  z-index: 200;
+  pointer-events: none;
+}
+#success-banner.show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* --- Баланс --- */
 #balance-amount {
   font-weight: 700;
   letter-spacing: -0.02em;
   transition: all .4s ease;
 }
 .balance-glow {
-  text-shadow: 0 0 18px rgba(59,130,246,0.28), 0 6px 20px rgba(59,130,246,0.06);
+  text-shadow: 0 0 18px rgba(59,130,246,0.28);
   transform: scale(1.02);
 }
 
-/* Action buttons */
+/* --- Кнопки действий --- */
 .action-btn {
   display: flex;
   flex-direction: column;
@@ -95,7 +135,7 @@ body {
   box-shadow: 0 8px 22px rgba(59,130,246,0.06);
 }
 
-/* Assets cards */
+/* --- Активы --- */
 .asset-card {
   padding: 14px;
   border-radius: 12px;
@@ -111,7 +151,7 @@ body {
   box-shadow: 0 14px 30px rgba(2,6,23,0.5);
 }
 
-/* Toast */
+/* --- Toast уведомления --- */
 #toast {
   position: fixed;
   top: 16px;
@@ -130,7 +170,7 @@ body {
 }
 #toast.show { opacity: 1; pointer-events: auto; }
 
-/* Bottom nav */
+/* --- Нижняя панель --- */
 .bottom-nav {
   position: fixed;
   bottom: 12px;
@@ -143,300 +183,151 @@ body {
   border: 1px solid rgba(255,255,255,0.04);
   z-index: 100;
 }
-
-/* small */
 .small-muted { color: rgba(255,255,255,0.55); font-size: 13px; }
 </style>
 </head>
 <body>
-<!-- Toast -->
-<div id="toast" aria-hidden="true"></div>
+<div id="toast"></div>
+<div id="success-banner"></div>
 
-<!-- Главное меню -->
-<main id="main-menu" class="p-4" style="display: none;">
+<main id="main-menu" class="p-4" style="display:none;">
   <div class="max-w-xl mx-auto space-y-4">
-
-    <!-- Профиль -->
     <div class="glass p-4 flex items-center gap-3">
-      <img id="user-photo" src="https://via.placeholder.com/80" alt="avatar" class="w-12 h-12 rounded-full border border-white/10 object-cover">
+      <img id="user-photo" src="https://via.placeholder.com/80" class="w-12 h-12 rounded-full border border-white/10 object-cover">
       <div class="flex-1 min-w-0">
         <div id="user-name" class="text-base font-semibold truncate">Загрузка...</div>
-        <div id="wallet-short" class="text-xs small-muted mt-1" style="display: none;"></div>
+        <div id="wallet-short" class="text-xs small-muted mt-1" style="display:none;"></div>
       </div>
-      <button onclick="showToast('Настройки скоро будут доступны')" class="p-3 rounded-xl bg-white/5 active:bg-white/10 btn-glow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <line x1="3" y1="12" x2="21" y2="12"/>
-          <line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-      </button>
     </div>
 
-    <!-- Баланс -->
     <div class="glass text-center py-8">
       <div class="text-4xl mb-1" id="balance-amount">$0.00</div>
       <div class="text-sm small-muted">Общий баланс</div>
     </div>
 
-    <!-- Действия -->
     <div class="grid grid-cols-4 gap-2">
-      <button class="action-btn" onclick="showToast('Отправка скоро будет доступна')">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="22" y1="2" x2="11" y2="13"/>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-        <span class="text-xs small-muted">Отправить</span>
-      </button>
-
-      <button class="action-btn" onclick="showToast('Получение скоро будет доступно')">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <polyline points="19 12 12 19 5 12"/>
-        </svg>
-        <span class="text-xs small-muted">Получить</span>
-      </button>
-
-      <button class="action-btn" onclick="showToast('Биржа скоро будет доступна')">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>
-        <span class="text-xs small-muted">Биржа</span>
-      </button>
-
-      <button class="action-btn" onclick="showToast('Обмен скоро будет доступен')">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="17 1 21 5 17 9"/>
-          <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-          <polyline points="7 23 3 19 7 15"/>
-          <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-        </svg>
-        <span class="text-xs small-muted">Обмен</span>
-      </button>
+      <button class="action-btn" onclick="showToast('Отправка скоро будет доступна')">✈️<span class="text-xs small-muted">Отправить</span></button>
+      <button class="action-btn" onclick="showToast('Получение скоро будет доступно')">📥<span class="text-xs small-muted">Получить</span></button>
+      <button class="action-btn" onclick="showToast('Биржа скоро будет доступна')">📊<span class="text-xs small-muted">Биржа</span></button>
+      <button class="action-btn" onclick="showToast('Обмен скоро будет доступен')">🔄<span class="text-xs small-muted">Обмен</span></button>
     </div>
 
-    <!-- Заголовок активов -->
     <div class="flex justify-between items-center text-sm">
       <span class="text-white/70 font-medium">Активы</span>
-      <button onclick="showToast('Функция скоро будет доступна 🚀')" class="text-sky-400 active:text-sky-300 text-xs">
-        Скрыть мелкие балансы
-      </button>
+      <button onclick="showToast('Функция скоро будет доступна 🚀')" class="text-sky-400 active:text-sky-300 text-xs">Скрыть мелкие балансы</button>
     </div>
 
-    <!-- Список активов -->
     <div id="assets" class="space-y-3">
-      <!-- Пример карточки: TON -->
       <div class="asset-card">
-        <div>
-          <div class="text-sm font-medium">TON</div>
-          <div class="small-muted text-xs">Toncoin</div>
-        </div>
+        <div><div class="text-sm font-medium">TON</div><div class="small-muted text-xs">Toncoin</div></div>
         <div style="text-align:right">
           <div id="ton-balance-small" class="font-semibold">0 TON</div>
           <div class="small-muted text-xs" id="ton-fiat-small">$0.00</div>
         </div>
       </div>
-      <!-- другие токены/активы (пока статично) -->
     </div>
-
   </div>
 </main>
 
-<!-- Панель TON Connect (всплывающее) -->
 <div id="ton-panel">
-  <div class="panel-content">
-    <button id="close-ton" class="absolute top-4 right-4 text-white/60 active:text-white text-2xl leading-none" onclick="document.getElementById('ton-panel').classList.remove('active')">&times;</button>
+  <div class="panel-content relative">
+    <button id="close-ton" class="absolute top-4 right-4 text-white/60 text-2xl leading-none" onclick="document.getElementById('ton-panel').classList.remove('active')">&times;</button>
     <div class="flex justify-center mb-6">
       <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
-        <svg width="48" height="48" viewBox="0 0 56 56" fill="white" aria-hidden="true">
-          <path d="M28 56C43.464 56 56 43.464 56 28C56 12.536 43.464 0 28 0C12.536 0 0 12.536 0 28C0 43.464 12.536 56 28 56Z"/>
-          <path d="M37.56 15.63H18.44"/>
-        </svg>
+        <svg width="48" height="48" viewBox="0 0 56 56" fill="white"><circle cx="28" cy="28" r="28"/></svg>
       </div>
     </div>
     <h3 class="text-center font-semibold mb-1">Подключите TON-кошелёк</h3>
     <p class="small-muted text-center mb-6">Подключив кошелёк, вы сможете использовать TON для переводов и покупок</p>
     <div class="flex gap-3">
       <button id="connect-ton-btn" class="btn-primary flex-1">Подключить кошелёк</button>
-      <button id="skip-ton-btn" class="btn-primary" style="background:transparent; border:1px solid rgba(255,255,255,0.06)">Пропустить</button>
+      <button id="skip-ton-btn" class="btn-primary" style="background:transparent; border:1px solid rgba(255,255,255,0.1)">Пропустить</button>
     </div>
     <div class="text-center small-muted mt-4">@SendingCrypto_bot</div>
   </div>
 </div>
 
-<!-- Bottom nav (визуально) -->
 <nav class="bottom-nav glass">
-  <div class="max-w-xl mx-auto flex justify-between items-center">
-    <div class="nav-btn active">
-      <div class="text-xs">Главная</div>
-    </div>
-    <div class="nav-btn">
-      <div class="text-xs">Переводы</div>
-    </div>
-    <div class="nav-btn">
-      <div class="text-xs">История</div>
-    </div>
-    <div class="nav-btn">
-      <div class="text-xs">Профиль</div>
-    </div>
+  <div class="max-w-xl mx-auto flex justify-between text-xs text-white/70">
+    <span>Главная</span><span>Переводы</span><span>История</span><span>Профиль</span>
   </div>
 </nav>
 
-<!-- Подключаем TonConnect UI (локально в корне репозитория) -->
 <script src="./tonconnect-ui.min.js"></script>
 <script>
-/*
-  Логика:
-  - Инициализируем TonConnectUI при загрузке.
-  - Кнопка подключения создаётся (и есть backup-панель).
-  - При подключении получаем адрес и баланс через toncenter API.
-  - Баланс отображается в блоке "Общий баланс" и в карточке TON.
-  - Всё визуальные улучшения – CSS, а структура DOM сохранена.
-*/
-
 const MANIFEST_URL = 'https://sendingcrypto.vercel.app/tonconnect-manifest.json';
 const TONCENTER_BALANCE_ENDPOINT = 'https://toncenter.com/api/v2/getAddressBalance';
 
-// удобный toast
-function showToast(text) {
-  const toast = document.getElementById('toast');
-  toast.textContent = text;
+function showToast(text){
+  const toast=document.getElementById('toast');
+  toast.textContent=text;
   toast.classList.add('show');
   clearTimeout(toast._t);
-  toast._t = setTimeout(()=> toast.classList.remove('show'), 3000);
+  toast._t=setTimeout(()=>toast.classList.remove('show'),3000);
 }
 
-async function fetchTonBalance(address) {
-  try {
-    const res = await fetch(`${TONCENTER_BALANCE_ENDPOINT}?address=${encodeURIComponent(address)}`);
-    const json = await res.json();
-    if (json && json.ok && json.result) {
-      // возвращаем в TON
-      return Number(json.result) / 1e9;
-    } else {
-      console.warn('toncenter returned', json);
-      return 0;
-    }
-  } catch (e) {
-    console.error('Ошибка получения баланса TON', e);
-    return 0;
-  }
+function showSuccessBanner(text){
+  const banner=document.getElementById('success-banner');
+  banner.textContent=text;
+  banner.classList.add('show');
+  setTimeout(()=>banner.classList.remove('show'),2500);
 }
 
-function updateBalanceUI(tonValue) {
-  // Общий баланс
-  const main = document.getElementById('balance-amount');
-  // Отображаем в TON и в USD-подсказке (если нужна конвертация — можно добавить API курса)
-  main.textContent = tonValue.toFixed(4) + ' TON';
-  main.classList.add('balance-glow');
-
-  // Обновим карточку TON
-  const small = document.getElementById('ton-balance-small');
-  if (small) small.textContent = tonValue.toFixed(4) + ' TON';
-
-  // (опционально) можно посчитать fiat по курсу, но сейчас оставим статично
-  const fiat = document.getElementById('ton-fiat-small');
-  if (fiat) fiat.textContent = '$' + (tonValue * 1.7).toFixed(2); // пример: грубый курс (поставь реальный API при желании)
+async function fetchTonBalance(address){
+  try{
+    const res=await fetch(`${TONCENTER_BALANCE_ENDPOINT}?address=${encodeURIComponent(address)}`);
+    const json=await res.json();
+    return json.ok && json.result ? Number(json.result)/1e9 : 0;
+  }catch(e){console.error(e);return 0;}
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    // Telegram WebApp ready (если запускается внутри Telegram)
-    if (window.Telegram?.WebApp) {
-      try { window.Telegram.WebApp.ready(); } catch(e) { console.warn('Telegram ready failed', e); }
-      // show user info if exists
-      if (window.Telegram.WebApp.initDataUnsafe?.user) {
-        const u = window.Telegram.WebApp.initDataUnsafe.user;
-        document.getElementById('user-name').textContent = (u.first_name || '') + (u.last_name ? ' ' + u.last_name : '');
-        if (u.photo_url) document.getElementById('user-photo').src = u.photo_url;
+function updateBalanceUI(v){
+  const el=document.getElementById('balance-amount');
+  el.textContent=v.toFixed(4)+' TON';
+  el.classList.add('balance-glow');
+  document.getElementById('ton-balance-small').textContent=v.toFixed(4)+' TON';
+  document.getElementById('ton-fiat-small').textContent='$'+(v*1.7).toFixed(2);
+}
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    if(window.Telegram?.WebApp){
+      try{window.Telegram.WebApp.ready();}catch{}
+      if(window.Telegram.WebApp.initDataUnsafe?.user){
+        const u=window.Telegram.WebApp.initDataUnsafe.user;
+        document.getElementById('user-name').textContent=(u.first_name||'')+(u.last_name?' '+u.last_name:'');
+        if(u.photo_url)document.getElementById('user-photo').src=u.photo_url;
       }
     }
+    document.getElementById('main-menu').style.display='block';
+    if(!window.TON_CONNECT_UI){showToast('Ошибка SDK');return;}
+    const tonConnect=new TON_CONNECT_UI.TonConnectUI({manifestUrl:MANIFEST_URL});
+    const tonPanel=document.getElementById('ton-panel');
+    const connectBtn=document.getElementById('connect-ton-btn');
+    const skipBtn=document.getElementById('skip-ton-btn');
 
-    // показываем главный экран
-    document.getElementById('main-menu').style.display = 'block';
-
-    // Если TonConnect UI не доступен — предупреждаем
-    if (!window.TON_CONNECT_UI || !window.TON_CONNECT_UI.TonConnectUI) {
-      console.error('TonConnect UI not found');
-      showToast('Ошибка загрузки SDK');
-      // но мы всё же покажем панель подключения (кнопка)
-      document.getElementById('ton-panel').classList.add('active');
-      return;
-    }
-
-    // инициализация TonConnect UI
-    const tonConnect = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: MANIFEST_URL
-    });
-
-    // Привязка кнопок панели
-    const connectBtn = document.getElementById('connect-ton-btn');
-    const skipBtn = document.getElementById('skip-ton-btn');
-    const tonPanel = document.getElementById('ton-panel');
-
-    // Если пользователь хочет сразу подключить — показываем панель
-    connectBtn.addEventListener('click', async () => {
-      try {
-        const session = await tonConnect.connectWallet();
-        // session: { account: { address, name? }, ... }
-        if (session && session.account && session.account.address) {
-          const addr = session.account.address;
-          document.getElementById('wallet-short').style.display = 'block';
-          document.getElementById('wallet-short').textContent = addr.slice(0,8) + '...' + addr.slice(-4);
-          showToast('Кошелёк подключён');
-
-          // Получаем баланс и показываем
-          const balance = await fetchTonBalance(addr);
-          updateBalanceUI(balance);
-
-          // Закрыть панель
-          tonPanel.classList.remove('active');
-        } else {
-          showToast('Не удалось получить адрес кошелька');
-        }
-      } catch (err) {
-        console.error('connectWallet error', err);
+    connectBtn.addEventListener('click',async()=>{
+      try{
+        tonPanel.classList.remove('active');
+        setTimeout(()=>tonPanel.style.display='none',400);
+        const session=await tonConnect.connectWallet();
+        tonPanel.style.display='';
+        if(session?.account?.address){
+          const addr=session.account.address;
+          document.getElementById('wallet-short').style.display='block';
+          document.getElementById('wallet-short').textContent=addr.slice(0,8)+'...'+addr.slice(-4);
+          const bal=await fetchTonBalance(addr);
+          updateBalanceUI(bal);
+          showSuccessBanner('Кошелёк успешно подключён ✅');
+        }else showToast('Не удалось получить адрес кошелька');
+      }catch(e){
+        tonPanel.style.display='';
         showToast('Ошибка подключения кошелька');
       }
     });
 
-    skipBtn.addEventListener('click', () => {
-      tonPanel.classList.remove('active');
-      showToast('Пропущено');
-    });
-
-    // добавим кнопку подключения сверху (если нужен быстрый доступ)
-    const topConnect = document.createElement('button');
-    topConnect.innerText = 'Подключить TON кошелёк';
-    topConnect.className = 'btn-primary mt-4';
-    topConnect.onclick = () => {
-      document.getElementById('ton-panel').classList.add('active');
-    };
-    // вставляем под профилем
-    const profile = document.querySelector('.glass.p-4.flex.items-center');
-    if (profile && profile.parentNode) {
-      profile.parentNode.insertBefore(topConnect, profile.nextSibling);
-    }
-
-    // Если пользователь уже заранее дал доступ (редко) — попробуем посмотреть last session
-    try {
-      const last = await tonConnect.getWallets();
-      if (Array.isArray(last) && last.length > 0) {
-        const addr = last[0].account.address;
-        document.getElementById('wallet-short').style.display = 'block';
-        document.getElementById('wallet-short').textContent = addr.slice(0,8) + '...' + addr.slice(-4);
-        // fetch balance
-        const bal = await fetchTonBalance(addr);
-        updateBalanceUI(bal);
-      }
-    } catch (e) {
-      // не критично
-      console.debug('no previous wallets', e);
-    }
-
-  } catch (err) {
-    console.error('Init error', err);
-    showToast('Ошибка инициализации');
-  }
+    skipBtn.addEventListener('click',()=>tonPanel.classList.remove('active'));
+  }catch(e){console.error(e);showToast('Ошибка инициализации');}
 });
 </script>
 </body>
