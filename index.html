@@ -5,90 +5,76 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
 <title>SendingCrypto Bot</title>
 
-<!-- Tailwind для быстрого базового стайлинга (можно убрать если не нужен) -->
+<!-- tailwind (удобно для быстрых утилит) -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-  /* ---- базовая палитра и типографика ---- */
   :root{
-    --bg-1:#071127;
-    --bg-2:#0b1220;
-    --glass: rgba(255,255,255,0.035);
+    --bg-1:#0b1220;
+    --bg-2:#0f1724;
+    --glass: rgba(255,255,255,0.018);
     --glass-2: rgba(255,255,255,0.03);
+    --border: rgba(255,255,255,0.04);
+    --muted: rgba(255,255,255,0.62);
     --accent: #3b82f6;
-    --muted: rgba(255,255,255,0.6);
-    --panel-glow: rgba(59,130,246,0.12);
+    --panel-glow: rgba(59,130,246,0.08);
   }
-  html,body{height:100%;}
+  html,body{height:100%;margin:0;}
   body{
-    margin:0;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
-    color:#fff;
+    background: linear-gradient(180deg,var(--bg-1) 0%, var(--bg-2) 100%);
+    color: #fff;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
-    padding-bottom:84px;
+    padding-bottom:88px;
   }
 
-  /* ---- container и общие классы ---- */
+  /* container */
   .container { max-width:520px; margin:0 auto; padding:16px; }
+
+  /* glass base */
   .glass {
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    background: linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.008));
     backdrop-filter: blur(8px) saturate(120%);
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,0.04);
-    box-shadow: 0 8px 28px rgba(2,6,23,0.6);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 26px rgba(2,6,23,0.6);
     transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, filter .22s ease;
   }
-  .glass.soft {
-    background: linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.01));
-    backdrop-filter: blur(6px) saturate(110%);
-  }
-  .glass:focus, .glass:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.08); }
+  .glass.soft { backdrop-filter: blur(6px) saturate(110%); }
+  .glass:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.06); }
 
-  /* ---- профиль ---- */
-  .profile {
-    display:flex; gap:12px; align-items:center; padding:12px;
-  }
-  .avatar { width:48px; height:48px; border-radius:12px; object-fit:cover; border:1px solid rgba(255,255,255,0.06); }
+  /* profile */
+  .profile { display:flex; gap:12px; align-items:center; padding:12px; }
+  .avatar { width:48px; height:48px; border-radius:10px; object-fit:cover; border:1px solid rgba(255,255,255,0.06); }
   .user-name { font-weight:600; font-size:15px; }
   .user-sub { font-size:12px; color:var(--muted); margin-top:4px; }
 
-  /* ---- баланс ---- */
-  .balance-card { text-align:center; padding:28px 16px; }
-  #balance-amount { font-size:32px; font-weight:700; letter-spacing:-0.02em; display:inline-flex; align-items:center; gap:8px; cursor:pointer; }
-  #balance-currency { font-size:14px; color:var(--muted); padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:rgba(255,255,255,0.02) }
-  .balance-glow {
-    filter: drop-shadow(0 10px 30px rgba(59,130,246,0.08));
-    transition: filter .28s ease, transform .28s ease;
-  }
-  .balance-animate { animation: pulse 2.5s ease-in-out infinite alternate; }
-  @keyframes pulse {
-    from { transform: scale(1); filter: drop-shadow(0 6px 18px rgba(59,130,246,0.06)); }
-    to   { transform: scale(1.01); filter: drop-shadow(0 16px 36px rgba(59,130,246,0.12)); }
-  }
+  /* balance */
+  .balance-card { text-align:center; padding:26px 14px; }
+  #balance-amount { font-size:32px; font-weight:700; letter-spacing:-0.02em; display:inline-flex; align-items:center; gap:10px; cursor:pointer; }
+  #balance-currency { font-size:13px; color:var(--muted); padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.012); }
+  .balance-glow { filter: drop-shadow(0 12px 36px rgba(59,130,246,0.08)); transition: filter .28s ease, transform .28s ease; }
+  .balance-hover { transition: box-shadow .22s ease; }
+  .balance-fade { transition: opacity .22s ease, transform .22s ease; }
 
-  /* ---- действия ---- */
-  .actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:8px; }
-  .action-btn {
-    padding:12px; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color:var(--muted);
-    transition: background .18s ease, box-shadow .18s ease, border-color .18s ease, transform .14s ease;
-  }
-  .action-btn:hover { background: rgba(255,255,255,0.03); box-shadow: 0 8px 22px rgba(59,130,246,0.06); color:#fff; transform: translateY(-3px); }
+  /* actions */
+  .actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:8px 0; }
+  .action-btn { padding:12px; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; background: rgba(255,255,255,0.012); border:1px solid rgba(255,255,255,0.02); color:var(--muted); transition: background .16s ease, transform .12s ease; }
+  .action-btn:hover { background: rgba(255,255,255,0.02); color:#fff; transform: translateY(-3px); box-shadow: 0 10px 26px rgba(2,6,23,0.45); }
+
   .action-label { font-size:12px; margin-top:8px; }
 
-  /* ---- активы список ---- */
-  .assets-title { display:flex; justify-content:space-between; align-items:center; padding:6px 0; color:var(--muted); font-size:13px; }
-  .asset-card { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px; border-radius:10px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.008)); border:1px solid rgba(255,255,255,0.02); transition:transform .18s ease, box-shadow .18s ease; }
-  .asset-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(2,6,23,0.45); }
+  /* assets list */
+  .assets-title { display:flex; justify-content:space-between; align-items:center; padding-top:8px; color:var(--muted); font-size:13px; }
+  .asset-card { padding:12px; border-radius:10px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.008)); border:1px solid rgba(255,255,255,0.02); display:flex; justify-content:space-between; align-items:center; transition: transform .14s ease, box-shadow .14s ease; }
+  .asset-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(2,6,23,0.45); }
   .asset-left { display:flex; flex-direction:column; }
   .asset-name { font-weight:600; font-size:14px; }
   .asset-sub { font-size:12px; color:var(--muted); }
-  .asset-right { text-align:right; }
 
-  /* ---- panel TonConnect popup overlay ---- */
+  /* Ton panel (overlay) */
   #ton-panel {
     position: fixed;
     inset:0;
@@ -96,37 +82,34 @@
     align-items:flex-end;
     justify-content:center;
     z-index:60;
-    background: rgba(2,6,23,0.42);
+    background: rgba(1,4,12,0.42);
     backdrop-filter: blur(6px);
-    transition: opacity .28s ease;
+    transition: opacity .28s ease, visibility .28s ease;
   }
-  #ton-panel.active { display:flex; opacity:1; }
-  .panel-card { width:100%; max-width:520px; border-radius:18px 18px 6px 6px; padding:20px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.006)); box-shadow: 0 18px 48px rgba(2,6,23,0.55); }
-  .panel-cta { display:flex; gap:10px; margin-top:8px; }
+  #ton-panel.active { display:flex; opacity:1; visibility:visible; }
+  .panel-card { width:100%; max-width:520px; border-radius:18px 18px 8px 8px; padding:18px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(255,255,255,0.016), rgba(255,255,255,0.006)); box-shadow: 0 18px 48px rgba(2,6,23,0.55); position:relative; }
 
-  /* glow under panel (soft) */
+  /* soft glow under panel */
   .panel-glow {
     position:absolute;
     left:50%;
     transform:translateX(-50%);
     bottom:8px;
-    width:80%;
-    height:52px;
+    width:78%;
+    height:56px;
     border-radius:20px;
-    filter: blur(28px);
-    background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(96,165,250,0.06));
-    opacity:0.9;
-    transition: filter .22s ease, opacity .22s ease;
+    background: linear-gradient(90deg, rgba(59,130,246,0.06), rgba(96,165,250,0.04));
+    filter: blur(22px);
+    opacity:0.95;
     z-index:55;
     pointer-events:none;
+    transition: filter .22s ease, opacity .22s ease;
   }
   .panel-card:hover + .panel-glow { filter: blur(12px) saturate(120%); opacity:1; }
 
-  /* success banner */
-  #success-banner { position: fixed; top:18%; left:50%; transform:translateX(-50%) scale(.96); padding:12px 18px; border-radius:12px; background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(96,165,250,0.08)); border:1px solid rgba(59,130,246,0.16); color:#fff; font-weight:600; box-shadow: 0 12px 36px rgba(2,6,23,0.6); opacity:0; transition: all .42s cubic-bezier(.2,.9,.3,1); z-index:120; pointer-events:none;}
+  /* success banner & toast */
+  #success-banner { position: fixed; top:18%; left:50%; transform:translateX(-50%) scale(.96); padding:12px 16px; border-radius:12px; background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(96,165,250,0.08)); border:1px solid rgba(59,130,246,0.16); color:#fff; font-weight:600; box-shadow: 0 12px 36px rgba(2,6,23,0.6); opacity:0; transition: all .42s cubic-bezier(.2,.9,.3,1); z-index:120; pointer-events:none; }
   #success-banner.show { opacity:1; transform:translateX(-50%) scale(1); }
-
-  /* toast */
   #toast { position:fixed; top:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.6); padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); color:#fff; font-size:13px; opacity:0; transition:opacity .22s ease; z-index:220; }
   #toast.show { opacity:1; }
 
@@ -134,127 +117,111 @@
   .bottom-nav { position:fixed; bottom:12px; left:12px; right:12px; background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008)); border-radius:12px; padding:10px 14px; border:1px solid rgba(255,255,255,0.02); display:flex; justify-content:space-around; gap:12px; z-index:10; box-shadow: 0 8px 24px rgba(2,6,23,0.5); }
   .nav-item { color:var(--muted); font-size:13px; }
 
-  /* responsive */
-  @media (max-width:520px){ .container{padding:12px;} #balance-amount{font-size:26px;} }
+  /* loading spinner used in panel */
+  .loading-spinner { border:3px solid rgba(255,255,255,0.08); border-top:3px solid var(--accent); border-radius:50%; width:32px; height:32px; animation:spin 1s linear infinite; margin:0 auto; }
+  @keyframes spin { from{transform:rotate(0)} to {transform:rotate(360deg);} }
+
+  @media (max-width:520px){ .container{padding:12px;} #balance-amount{font-size:28px;} }
 </style>
 </head>
 <body>
 
-<!-- toast & success banner -->
-<div id="toast" role="status" aria-hidden="true"></div>
+<!-- toast & success -->
+<div id="toast" aria-hidden="true"></div>
 <div id="success-banner" aria-hidden="true"></div>
 
 <!-- main -->
-<main class="container" id="main-menu" style="display:none;">
-  <!-- profile -->
-  <div class="glass profile" style="padding:14px; align-items:center;">
-    <img id="user-photo" class="avatar" src="https://via.placeholder.com/80" alt="avatar">
+<main id="main-menu" class="container" style="display:none;">
+  <!-- profile (from your HTML) -->
+  <div class="glass profile">
+    <img id="user-photo" src="https://via.placeholder.com/80" alt="avatar" class="avatar">
     <div style="flex:1; min-width:0;">
       <div id="user-name" class="user-name">Загрузка...</div>
       <div id="wallet-short" class="user-sub" style="display:none;"></div>
     </div>
-    <button onclick="showToast('Настройки скоро будут доступны')" style="background:transparent; border:none; color:var(--muted); padding:8px;">⋮</button>
+    <button onclick="showToast('Настройки скоро будут доступны')" class="p-3 rounded-xl bg-white/5 active:bg-white/10 btn-glow">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
   </div>
 
   <!-- balance -->
   <div class="glass balance-card" style="margin-top:12px;">
     <div style="display:flex; justify-content:center; align-items:center; gap:12px;">
-      <div id="balance-amount" title="Нажмите для смены валюты" class="balance-glow">
+      <div id="balance-amount" class="balance-glow balance-fade" title="Нажмите, чтобы сменить валюту">
         <span id="balance-value">$0.00</span>
       </div>
-      <div id="balance-currency" title="Нажмите на баланс, чтобы сменить валюту">USDT</div>
+      <div id="balance-currency" class="text-sm" title="Текущая валюта">USDT</div>
     </div>
     <div style="margin-top:8px; color:var(--muted); font-size:13px;">Общий баланс</div>
   </div>
 
-  <!-- actions -->
+  <!-- actions (4 buttons) -->
   <div style="margin-top:12px;">
     <div class="actions">
       <button class="action-btn" onclick="showToast('Отправка скоро будет доступна')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 2L11 13"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         <div class="action-label">Отправить</div>
       </button>
+
       <button class="action-btn" onclick="showToast('Получение скоро будет доступно')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
         <div class="action-label">Получить</div>
       </button>
+
       <button class="action-btn" onclick="showToast('Биржа скоро будет доступна')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12h18"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         <div class="action-label">Биржа</div>
       </button>
+
       <button class="action-btn" onclick="showToast('Обмен скоро будет доступен')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H7"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
         <div class="action-label">Обмен</div>
       </button>
     </div>
   </div>
 
-  <!-- assets header -->
+  <!-- assets -->
   <div style="margin-top:14px;">
     <div class="assets-title">
       <div style="font-weight:600">Активы</div>
       <div style="font-size:12px; color:var(--muted); cursor:pointer;" onclick="showToast('Скрыть мелкие балансы - скоро')">Скрыть мелкие балансы</div>
     </div>
 
-    <!-- list -->
-    <div style="margin-top:8px; display:flex; flex-direction:column; gap:10px;">
-      <div class="asset-card">
-        <div class="asset-left">
-          <div class="asset-name">Bitcoin</div>
-          <div class="asset-sub">BTC</div>
-        </div>
-        <div class="asset-right">
-          <div style="font-weight:600;">0 BTC</div>
-          <div style="color:var(--muted); font-size:12px;">$0.00</div>
-        </div>
-      </div>
-
-      <div class="asset-card">
-        <div class="asset-left">
-          <div class="asset-name">Ethereum</div>
-          <div class="asset-sub">ETH</div>
-        </div>
-        <div class="asset-right">
-          <div style="font-weight:600;">0 ETH</div>
-          <div style="color:var(--muted); font-size:12px;">$0.00</div>
-        </div>
-      </div>
-
-      <!-- TON card -->
-      <div class="asset-card">
-        <div class="asset-left">
-          <div class="asset-name">Toncoin</div>
-          <div class="asset-sub">TON</div>
-        </div>
-        <div class="asset-right">
-          <div id="ton-balance-small" style="font-weight:600;">0 TON</div>
-          <div id="ton-fiat-small" style="color:var(--muted); font-size:12px;">$0.00</div>
-        </div>
-      </div>
-
-    </div>
+    <div id="assets" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;"></div>
   </div>
 
 </main>
 
-<!-- TonConnect panel -->
+<!-- TonConnect panel (structure from your html) -->
 <div id="ton-panel" aria-hidden="true">
-  <div class="panel-card glass soft" role="dialog" aria-modal="true" style="position:relative;">
+  <div class="panel-card glass soft" role="dialog" aria-modal="true">
+    <button id="close-ton" class="absolute top-4 right-4 text-white/60 active:text-white text-2xl leading-none" aria-label="Закрыть">&times;</button>
+
     <div style="display:flex; justify-content:center; margin-bottom:12px;">
       <div style="width:72px; height:72px; border-radius:999px; background: linear-gradient(180deg,#2b6ef6,#3b82f6); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(59,130,246,0.12);">
         <div style="width:40px; height:40px; border-radius:999px; background:#fff;"></div>
       </div>
     </div>
-    <div style="text-align:center; font-weight:700; margin-bottom:6px;">Подключите TON-кошелёк</div>
-    <div style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:14px;">Подключив кошелёк, вы сможете использовать TON для переводов и покупок</div>
 
-    <div class="panel-cta">
-      <button id="connect-ton-btn" class="glass" style="flex:1; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); font-weight:600;">Подключить кошелек</button>
-      <button id="skip-ton-btn" class="glass" style="flex:0 0 120px; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);">Пропустить</button>
+    <h2 class="text-xl font-bold mb-2 text-center">Подключите TON-кошелёк</h2>
+    <p class="text-sm text-white/70 mb-6 text-center px-2 leading-relaxed">
+      Подключив кошелёк, вы сможете использовать TON для переводов и покупок
+    </p>
+
+    <div id="ton-connect-button" class="flex justify-center mb-4 min-h-[56px]">
+      <div class="loading-spinner" aria-hidden="true"></div>
     </div>
 
-    <div style="text-align:center; color:var(--muted); font-size:12px; margin-top:12px;">@SendingCrypto_bot</div>
-    <!-- soft glow under -->
+    <button id="manual-connect" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-3.5 px-6 rounded-xl btn-glow mb-3 shadow-lg">
+      Подключить кошелек
+    </button>
+    <button id="skip-ton" class="w-full text-white/70 active:text-white text-sm py-2">Пропустить</button>
+
+    <!-- soft glow under the panel -->
     <div class="panel-glow" aria-hidden="true"></div>
   </div>
 </div>
@@ -267,254 +234,343 @@
   <div class="nav-item">Профиль</div>
 </div>
 
-<!-- TonConnect SDK local file -->
-<script src="./tonconnect-ui.min.js"></script>
+<!-- TonConnect UI -->
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
 <script>
-/*
-  Логика:
-  - MANIFEST_URL: проверь, соответствуют ли url в manifest-файле и тут (домен)
-  - Подключение TonConnect: скрываем панель плавно перед connect
-  - Получаем баланс TON через Toncenter API
-  - Получаем курс TON -> USDT через Binance
-  - Получаем курс USDT -> fiat через Binance (если доступно), иначе через exchangerate.host (fallback)
-  - При клике на баланс циклим валюты: USDT -> TON -> TRY -> UAH -> RUB
-*/
-
-const MANIFEST_URL = 'https://sendingcrypto.vercel.app/tonconnect-manifest.json'; // поменяй при необходимости
+/* === Конфигурация === */
+const MANIFEST_URL = 'https://sending-crypto.vercel.app/tonconnect-manifest.json'; // поменяй если нужно
 const TONCENTER_BALANCE_ENDPOINT = 'https://toncenter.com/api/v2/getAddressBalance';
 const BINANCE_TICKER = 'https://api.binance.com/api/v3/ticker/price?symbol='; // + SYMBOL
-const EXCHANGE_FALLBACK = 'https://api.exchangerate.host/latest?base=USD'; // fallback для фиат
+const BINANCE_24H = 'https://api.binance.com/api/v3/ticker/24hr?symbol=';
+const EXCHANGE_FALLBACK = 'https://api.exchangerate.host/latest?base=USD';
 
-// валюта-порядок и метаданные
+const CRYPTO_ASSETS = [
+  { symbol: 'BTCUSDT', label: 'Bitcoin', short: 'BTC' },
+  { symbol: 'ETHUSDT', label: 'Ethereum', short: 'ETH' },
+  { symbol: 'TONUSDT', label: 'Toncoin', short: 'TON' },
+  { symbol: 'SOLUSDT', label: 'Solana', short: 'SOL' },
+  { symbol: 'LTCUSDT', label: 'Litecoin', short: 'LTC' }
+];
+
 const CURRENCIES = [
-  { code: 'USDT', label: 'USDT', symbol: '$' },
-  { code: 'TON',  label: 'TON',  symbol: 'TON' },
-  { code: 'TRY',  label: '₺',    symbol: '₺' },
-  { code: 'UAH',  label: '₴',    symbol: '₴' },
-  { code: 'RUB',  label: '₽',    symbol: '₽' }
+  { code: 'USDT', label: 'USDT' },
+  { code: 'TON',  label: 'TON'  },
+  { code: 'TRY',  label: 'TRY'  }, // Турецкая лира
+  { code: 'UAH',  label: 'UAH'  }, // Гривна
+  { code: 'RUB',  label: 'RUB'  }  // Рубль
 ];
 
 let currentCurrencyIndex = 0;
-let tonBalance = 0;        // в TON
-let tonUsdPrice = null;    // TON->USDT (USDT близко к USD)
-let fiatRates = {};        // USD -> {TRY,UAH,RUB} (fallback from exchangerate.host if needed)
-let tonConnect = null;
+let tonBalance = 0;         // в TON
+let tonUsdPrice = null;     // цена TON в USDT
+let fiatRates = {};         // USD -> {TRY, UAH, RUB}
+let tonConnectUI = null;
 
-// ---- UI helpers ----
-function showToast(text){ const t=document.getElementById('toast'); t.textContent=text; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3000); }
-function showSuccess(text){ const s=document.getElementById('success-banner'); s.textContent=text; s.classList.add('show'); clearTimeout(s._t); s._t=setTimeout(()=>s.classList.remove('show'),2500); }
+/* === Утилиты UI === */
+function showToast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2800);
+}
+function showSuccess(text) {
+  const s = document.getElementById('success-banner');
+  s.textContent = text;
+  s.classList.add('show');
+  clearTimeout(s._t);
+  s._t = setTimeout(() => s.classList.remove('show'), 2500);
+}
 
-// ---- Binance and fallback fetchers ----
-async function fetchBinanceSymbol(symbol){
-  try{
-    const res = await fetch(BINANCE_TICKER + encodeURIComponent(symbol));
-    if (!res.ok) throw new Error('binance no symbol');
-    const json = await res.json();
-    if (json && json.price) return Number(json.price);
-    return null;
-  }catch(e){
-    console.warn('Binance fetch failed for', symbol, e);
+/* === Fetchers === */
+async function fetchBinance24(symbol) {
+  try {
+    const r = await fetch(BINANCE_24H + encodeURIComponent(symbol));
+    if (!r.ok) throw new Error('binance 24h failed');
+    return await r.json();
+  } catch (e) {
+    console.warn('Binance 24h fetch failed for', symbol, e);
     return null;
   }
 }
-
-async function fetchFiatFallback(){
-  try{
-    const res = await fetch(EXCHANGE_FALLBACK);
-    if(!res.ok) throw new Error('fallback fail');
-    const json = await res.json();
-    // json.rates contains USD->XXX
-    return json.rates || {};
-  }catch(e){
-    console.error('Fallback exchange fetch failed', e);
+async function fetchBinancePrice(symbol) {
+  try {
+    const r = await fetch(BINANCE_TICKER + encodeURIComponent(symbol));
+    if (!r.ok) throw new Error('binance price failed');
+    const j = await r.json();
+    return j && j.price ? Number(j.price) : null;
+  } catch (e) {
+    console.warn('Binance price fetch failed for', symbol, e);
+    return null;
+  }
+}
+async function fetchFallbackFiatRates() {
+  try {
+    const r = await fetch(EXCHANGE_FALLBACK);
+    if(!r.ok) throw new Error('fallback failed');
+    const j = await r.json();
+    return j.rates || {};
+  } catch (e) {
+    console.error('Fallback rates failed', e);
     return {};
   }
 }
-
-// ---- Ton balance fetch ----
-async function fetchTonBalance(addr){
-  try{
-    const r = await fetch(`${TONCENTER_BALANCE_ENDPOINT}?address=${encodeURIComponent(addr)}`);
+async function fetchTonBalance(address) {
+  try {
+    const r = await fetch(`${TONCENTER_BALANCE_ENDPOINT}?address=${encodeURIComponent(address)}`);
     const j = await r.json();
-    if(j && j.ok && j.result) return Number(j.result) / 1e9;
+    if (j && j.ok && j.result) return Number(j.result) / 1e9;
     return 0;
-  }catch(e){
+  } catch (e) {
     console.error('Toncenter fetch error', e);
     return 0;
   }
 }
 
-// ---- обновление цен ----
-async function updatePrices(){
-  // 1) TONUSDT
-  const tonPrice = await fetchBinanceSymbol('TONUSDT'); // цена 1 TON в USDT
-  if(tonPrice) tonUsdPrice = tonPrice;
-  // 2) fiat rates via Binance if possible
-  const usdtTry = await fetchBinanceSymbol('USDTTRY'); // USDT->TRY
-  const usdtUah = await fetchBinanceSymbol('USDTUAH'); // may not exist
-  const usdtRub = await fetchBinanceSymbol('USDTRUB') || await fetchBinanceSymbol('USDTBRL'); // try variants
+/* === Prices & Assets rendering === */
+async function loadAssetsAndPrices() {
+  const container = document.getElementById('assets');
+  container.innerHTML = ''; // loading placeholder
+  try {
+    const promises = CRYPTO_ASSETS.map(async asset => {
+      const data = await fetchBinance24(asset.symbol);
+      return {
+        ...asset,
+        price: data && data.lastPrice ? Number(data.lastPrice) : 0,
+        change: data && data.priceChangePercent ? Number(data.priceChangePercent) : 0
+      };
+    });
+    const results = await Promise.all(promises);
+    renderAssets(results);
+  } catch (e) {
+    console.error('Error loading assets', e);
+  }
+}
+function renderAssets(data) {
+  const container = document.getElementById('assets');
+  container.innerHTML = data.map(asset => {
+    const changeColor = asset.change >= 0 ? 'text-green-400' : 'text-red-400';
+    const changeIcon = asset.change >= 0 ? '▲' : '▼';
+    const priceStr = asset.price ? asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 }) : '0.00';
+    return `
+      <div class="asset-card glass p-3">
+        <div class="asset-left">
+          <div class="asset-name">${asset.label}</div>
+          <div class="asset-sub">$${priceStr} <span class="${changeColor} ml-2">${changeIcon} ${Math.abs(asset.change).toFixed(2)}%</span></div>
+        </div>
+        <div class="asset-right text-right">
+          <div class="font-medium">0 ${asset.short}</div>
+          <div class="text-xs text-white/60">$0.00</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
-  // use what we have, else fallback to exchangerate.host
-  const fallbackRates = await fetchFiatFallback(); // USD-based
-  // map: USD->TRY, USD->UAH, USD->RUB
-  fiatRates.TRY = usdtTry ? 1 / usdtTry : (fallbackRates.TRY || 0);
-  fiatRates.UAH = usdtUah ? 1 / usdtUah : (fallbackRates.UAH || 0);
-  // For RUB: Binance might not provide USDTRUB; if usdtRub value is not true, use fallback
-  // Note: if Binance returns USDTTRY, that gives USDT price in TRY -> to convert USD->TRY we invert.
-  // For safety, ensure non-zero
-  fiatRates.RUB = (usdtRub ? 1 / usdtRub : (fallbackRates.RUB || 0));
-  // Also set USD=1
+/* === Price updates for TON and fiat rates === */
+async function updateTonPriceAndFiat() {
+  // TONUSDT
+  const tonPrice = await fetchBinancePrice('TONUSDT');
+  if (tonPrice) tonUsdPrice = tonPrice;
+  // fiat via Binance if available (USDTTRY, USDTUAH, USDTRUB)
+  const usdtTry = await fetchBinancePrice('USDTTRY'); // price = USDT price in TRY
+  const usdtUah = await fetchBinancePrice('USDTUAH'); // maybe null
+  const usdtRub = await fetchBinancePrice('USDTRUB') || await fetchBinancePrice('USDTBRL') || null; // try variants
+  // fallback
+  const fallback = await fetchFallbackFiatRates();
+
+  // If Binance returns USDTTRY as price (which is price of USDT in TRY), we want USD->TRY = that price
+  fiatRates.TRY = usdtTry ? Number(usdtTry) : (fallback.TRY || 0);
+  fiatRates.UAH = usdtUah ? Number(usdtUah) : (fallback.UAH || 0);
+  // For RUB, if we couldn't get USDTRUB, use fallback.RUB
+  fiatRates.RUB = usdtRub ? Number(usdtRub) : (fallback.RUB || 0);
+  // USD reference
   fiatRates.USD = 1;
-  // USDT ~ USD, so treat USDT as USD for conversion
-  return;
 }
 
-// ---- UI update of balances ----
-function updateBalanceDisplay(){
+/* === Update displayed balance (top + TON card) === */
+function updateBalanceDisplay() {
   const balValueEl = document.getElementById('balance-value');
-  const currencyEl = document.getElementById('balance-currency');
+  const curEl = document.getElementById('balance-currency');
   const cur = CURRENCIES[currentCurrencyIndex];
-  // compute display value
-  let display = '';
-  if(cur.code === 'TON'){
-    display = tonBalance.toFixed(4) + ' TON';
-  } else if(cur.code === 'USDT'){
-    // TON * TONUSDT = USD/USDT
-    const usd = (tonUsdPrice !== null) ? (tonBalance * tonUsdPrice) : (tonBalance * 0);
-    display = (usd).toFixed(2) + ' USDT';
+
+  if (cur.code === 'TON') {
+    balValueEl.textContent = `${tonBalance.toFixed(4)} TON`;
+  } else if (cur.code === 'USDT') {
+    const usdVal = (tonUsdPrice !== null) ? (tonBalance * tonUsdPrice) : 0;
+    balValueEl.textContent = `$${usdVal.toFixed(2)}`;
   } else {
-    // TRY/UAH/RUB: convert USD (TON * TONUSDT) -> target
-    const usd = (tonUsdPrice !== null) ? (tonBalance * tonUsdPrice) : 0;
-    let rate = 1;
-    if(cur.code === 'TRY'){ rate = fiatRates.TRY || 0; display = (usd * rate).toFixed(2) + ' ' + cur.label; }
-    if(cur.code === 'UAH'){ rate = fiatRates.UAH || 0; display = (usd * rate).toFixed(2) + ' ' + cur.label; }
-    if(cur.code === 'RUB'){ rate = fiatRates.RUB || 0; display = (usd * rate).toFixed(2) + ' ' + cur.label; }
-  }
-  // if tonUsdPrice not loaded and currency requires price, show loading
-  if((cur.code !== 'TON') && tonUsdPrice === null){
-    balValueEl.textContent = 'Загрузка...';
-  } else {
-    balValueEl.textContent = display;
+    // fiat: USD -> target
+    const usdVal = (tonUsdPrice !== null) ? (tonBalance * tonUsdPrice) : 0;
+    const rate = fiatRates[cur.code] || 0;
+    // if fiat rate is returned as USDT->CUR (i.e. value of 1 USDT in TRY), we can use it directly
+    const fiatVal = usdVal * rate;
+    balValueEl.textContent = (rate ? `${fiatVal.toFixed(2)} ${cur.code}` : 'Загрузка...');
   }
 
-  currencyEl.textContent = cur.code;
-  // small ton card
-  document.getElementById('ton-balance-small').textContent = tonBalance.toFixed(4) + ' TON';
-  // ton fiat small
-  const tonFiatEl = document.getElementById('ton-fiat-small');
-  const usdVal = (tonUsdPrice !== null) ? tonBalance * tonUsdPrice : 0;
-  tonFiatEl.textContent = '$' + usdVal.toFixed(2);
-  // visual glow
-  const balRoot = document.getElementById('balance-amount');
-  balRoot.classList.add('balance-animate');
-  setTimeout(()=> balRoot.classList.remove('balance-animate'), 1200);
+  curEl.textContent = cur.code;
+  // update TON small card
+  const tonSmall = document.getElementById('ton-balance-small');
+  if (tonSmall) tonSmall.textContent = `${tonBalance.toFixed(4)} TON`;
+  const tonFiatSmall = document.getElementById('ton-fiat-small');
+  if (tonFiatSmall) {
+    const usdVal = (tonUsdPrice !== null) ? (tonBalance * tonUsdPrice) : 0;
+    tonFiatSmall.textContent = `$${usdVal.toFixed(2)}`;
+  }
+
+  // small pulse
+  const root = document.getElementById('balance-amount');
+  root.classList.add('balance-glow');
+  setTimeout(()=> root.classList.remove('balance-glow'), 900);
 }
 
-// ---- cycle currency on click ----
-function cycleCurrency(){
+/* === Cycle currency on click === */
+function cycleCurrency() {
   currentCurrencyIndex = (currentCurrencyIndex + 1) % CURRENCIES.length;
   updateBalanceDisplay();
 }
 
-// ---- TonConnect integration and panel behavior ----
-async function initTonConnectFlow(){
-  if(!window.TON_CONNECT_UI || !window.TON_CONNECT_UI.TonConnectUI){
-    console.error('TonConnect UI not loaded');
-    showToast('Ошибка загрузки TonConnect SDK');
-    // show panel anyway
-    openTonPanel();
+/* === TonConnect integration & panel behavior === */
+async function initTonConnect() {
+  // wait for TonConnectUI global
+  let attempts = 0;
+  while (!window.TonConnectUI && attempts < 40) {
+    await new Promise(r => setTimeout(r, 100));
+    attempts++;
+  }
+  if (!window.TonConnectUI) {
+    document.getElementById('ton-connect-button').innerHTML = '<div class="text-sm text-red-400">Ошибка загрузки SDK</div>';
     return;
   }
-  tonConnect = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: MANIFEST_URL });
 
-  const tonPanel = document.getElementById('ton-panel');
-  const connectBtn = document.getElementById('connect-ton-btn');
-  const skipBtn = document.getElementById('skip-ton-btn');
+  // init UI
+  tonConnectUI = new TonConnectUI({
+    manifestUrl: MANIFEST_URL,
+    buttonRootId: 'ton-connect-button'
+  });
 
-  // initial show
-  tonPanel.style.display = 'flex';
-  requestAnimationFrame(()=> tonPanel.classList.add('active'));
+  // manual connect button
+  document.getElementById('manual-connect').onclick = async () => {
+    try {
+      // hide panel smoothly before opening wallet popup
+      const panel = document.getElementById('ton-panel');
+      panel.classList.remove('active');
+      panel.style.pointerEvents = 'none';
+      await new Promise(r => setTimeout(r, 360));
+      panel.style.display = 'none';
 
-  connectBtn.addEventListener('click', async () => {
-    try{
-      // fade out panel smoothly, disable pointer events
-      tonPanel.classList.remove('active');
-      tonPanel.style.pointerEvents = 'none';
-      await new Promise(r => setTimeout(r, 380));
-      tonPanel.style.display = 'none';
+      await tonConnectUI.openModal(); // TonConnect modal
 
-      // call connect
-      const session = await tonConnect.connectWallet();
-      if(session && session.account && session.account.address){
-        const addr = session.account.address;
+    } catch (e) {
+      showToast('Ошибка: ' + (e.message || e));
+      console.error(e);
+    } finally {
+      // restore pointerEvents for future
+      const p = document.getElementById('ton-panel');
+      p.style.pointerEvents = 'auto';
+    }
+  };
+
+  // status change - when wallet connected
+  tonConnectUI.onStatusChange(async wallet => {
+    if (wallet) {
+      try {
+        const address = wallet.account.address;
+        localStorage.setItem('ton_wallet', address);
+        const short = address.slice(0, 6) + '...' + address.slice(-4);
+        document.getElementById('wallet-short').textContent = short;
         document.getElementById('wallet-short').style.display = 'block';
-        document.getElementById('wallet-short').textContent = addr.slice(0,8) + '...' + addr.slice(-4);
-        // fetch balance TON
-        tonBalance = await fetchTonBalance(addr);
-        // refresh prices
-        await updatePrices();
+
+        // fetch actual balance
+        tonBalance = await fetchTonBalance(address);
+        await updateTonPriceAndFiat();
         updateBalanceDisplay();
-        showSuccess('Кошелёк успешно подключён ✅');
-      } else {
-        showToast('Не удалось получить адрес кошелька');
+        showSuccess('Кошелек успешно подключён');
+        // hide panel if visible
+        const panel = document.getElementById('ton-panel');
+        panel.classList.remove('active');
+        setTimeout(()=> panel.style.display = 'none', 360);
+      } catch (err) {
+        console.error('onStatusChange error', err);
       }
-      // restore panel pointer events (it is hidden)
-      tonPanel.style.pointerEvents = 'auto';
-    }catch(e){
-      console.error('connect error', e);
-      // restore panel visible
-      tonPanel.style.display = '';
-      requestAnimationFrame(()=> tonPanel.classList.add('active'));
-      tonPanel.style.pointerEvents = 'auto';
-      showToast('Ошибка подключения кошелька');
+    } else {
+      // disconnected
+      localStorage.removeItem('ton_wallet');
+      showToast('Кошелек отключён');
     }
   });
-
-  skipBtn.addEventListener('click', () => {
-    tonPanel.classList.remove('active');
-    setTimeout(()=> tonPanel.style.display = 'none', 320);
-  });
-
-  // attempt to restore previously connected wallets
-  try{
-    const prev = await tonConnect.getWallets();
-    if(Array.isArray(prev) && prev.length>0){
-      const addr = prev[0].account.address;
-      document.getElementById('wallet-short').style.display = 'block';
-      document.getElementById('wallet-short').textContent = addr.slice(0,8) + '...' + addr.slice(-4);
-      tonBalance = await fetchTonBalance(addr);
-      await updatePrices();
-      updateBalanceDisplay();
-    }
-  }catch(e){ console.debug('no previous wallet', e); }
 }
 
-// ---- initial setup ----
-document.addEventListener('DOMContentLoaded', async () => {
-  // show main UI
-  document.getElementById('main-menu').style.display = 'block';
-  // wire balance click
-  document.getElementById('balance-amount').addEventListener('click', cycleCurrency);
+/* === Panel control (open/close) from your html actions === */
+function closeTonPanel() {
+  const panel = document.getElementById('ton-panel');
+  panel.classList.remove('active');
+  setTimeout(()=> { panel.style.display = 'none'; document.getElementById('main-menu').style.display = 'block'; }, 320);
+}
+function openTonPanel() {
+  const panel = document.getElementById('ton-panel');
+  panel.style.display = 'flex';
+  requestAnimationFrame(()=> panel.classList.add('active'));
+}
 
-  // set user from Telegram if present
-  if(window.Telegram?.WebApp?.initDataUnsafe?.user){
-    const u = window.Telegram.WebApp.initDataUnsafe.user;
-    document.getElementById('user-name').textContent = (u.first_name || '') + (u.last_name ? ' ' + u.last_name : '');
-    if(u.photo_url) document.getElementById('user-photo').src = u.photo_url;
+/* === Initialization on DOMContentLoaded === */
+document.addEventListener('DOMContentLoaded', async () => {
+  // Telegram WebApp tweaks if present
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    try { tg.ready(); tg.expand(); tg.setBackgroundColor('#0b1220'); } catch(e) {}
   }
 
-  // load initial prices (TONUSD)
-  await updatePrices();
+  // show main layout
+  document.getElementById('main-menu').style.display = 'block';
+  document.getElementById('balance-amount').addEventListener('click', cycleCurrency);
 
-  // init TonConnect
-  initTonConnectFlow();
+  // init user
+  if (tg?.initDataUnsafe?.user) {
+    const u = tg.initDataUnsafe.user;
+    document.getElementById('user-name').textContent = (u.first_name || '') + (u.last_name ? ' ' + u.last_name : '');
+    if (u.photo_url) document.getElementById('user-photo').src = u.photo_url;
+  } else {
+    document.getElementById('user-name').textContent = 'Demo User';
+  }
 
-  // refresh prices periodically (every 60s)
-  setInterval(async () => {
-    await updatePrices();
+  // load assets/prices
+  await loadAssetsAndPrices();
+  await updateTonPriceAndFiat();
+
+  // TonConnect init
+  await initTonConnect();
+
+  // if wallet saved in localStorage, try restore and load balance
+  const saved = localStorage.getItem('ton_wallet');
+  if (saved) {
+    // hide panel and show wallet
+    document.getElementById('ton-panel').style.display = 'none';
+    document.getElementById('wallet-short').textContent = saved.slice(0,6) + '...' + saved.slice(-4);
+    document.getElementById('wallet-short').style.display = 'block';
+    tonBalance = await fetchTonBalance(saved);
+    await updateTonPriceAndFiat();
     updateBalanceDisplay();
-  }, 60000);
+  } else {
+    // show panel
+    openTonPanel();
+  }
+
+  // wire panel buttons
+  document.getElementById('skip-ton').onclick = () => { closeTonPanel(); };
+  document.getElementById('close-ton').onclick = () => { closeTonPanel(); };
+  document.getElementById('ton-panel').onclick = (e) => { if (e.target.id === 'ton-panel') closeTonPanel(); };
+
+  // periodic updates: prices every 60s, balance every 30s if wallet connected
+  setInterval(async () => { await loadAssetsAndPrices(); await updateTonPriceAndFiat(); updateBalanceDisplay(); }, 60000);
+  setInterval(async () => {
+    const w = localStorage.getItem('ton_wallet');
+    if (w) {
+      tonBalance = await fetchTonBalance(w);
+      updateBalanceDisplay();
+    }
+  }, 30000);
 });
 </script>
 </body>
