@@ -1,7 +1,7 @@
 {
-  "url": "https://sending-crypto.vercel.app",
+  "url": "https://sending-crypto.vercel.app/",
   "name": "SendingCrypto Bot",
-  "iconUrl": "https://sending-crypto.vercel.app/icon.png",
-  "termsOfUseUrl": "https://sending-crypto.vercel.app/terms",
-  "privacyPolicyUrl": "https://sending-crypto.vercel.app/privacy"
+  "iconUrl": "https://sendingcrypto.vercel.app/icon.png",
+  "termsOfUseUrl": "https://sendingcrypto.vercel.app/terms",
+  "privacyPolicyUrl": "https://sendingcrypto.vercel.app/privacy"
 }
