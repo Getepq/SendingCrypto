@@ -1,557 +1,501 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-<title>SendingCrypto</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+  <title>SendingCrypto</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-1:#14192a;
+      --bg-2:#1b2236;
+      --glass: rgba(23,28,46,0.7);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.6);
+      --accent: #60a5fa;
+      --glow: rgba(80,160,255,0.14);
+      --glow-strong: rgba(80,160,255,0.32);
+    }
+    html,body { height:100%; margin:0; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial; }
+    body {
+      background: linear-gradient(180deg,var(--bg-1) 0%, var(--bg-2) 100%);
+      color:#fff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding-bottom:92px;
+    }
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(16px) saturate(160%);
+      border:1px solid var(--border);
+      border-radius:1rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      transition: box-shadow .24s ease, transform .22s ease, border-color .22s ease;
+    }
+    .glass:hover {
+      box-shadow: 0 12px 36px rgba(0,0,0,0.32);
+      transform: translateY(-2px);
+    }
+    .container { max-width:420px; margin:0 auto; padding:16px; }
 
-<!-- tailwind (утилиты) -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+    .profile { display:flex; gap:12px; align-items:center; padding:12px; }
+    .avatar { width:44px; height:44px; border-radius:10px; object-fit:cover; border:1px solid rgba(255,255,255,0.06); }
+    .user-name { font-weight:600; font-size:15px; }
+    .user-sub { font-size:12px; color:var(--muted); margin-top:4px; }
 
-<style>
-  :root{
-    --bg-1:#14192a;
-    --bg-2:#1b2236;
-    --glass: rgba(23,28,46,0.7);
-    --border: rgba(255,255,255,0.08);
-    --muted: rgba(255,255,255,0.6);
-    --accent: #60a5fa;
-    --glow: rgba(80,160,255,0.14);
-    --glow-strong: rgba(80,160,255,0.32);
-  }
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;}
-  body{
-    background: linear-gradient(180deg,var(--bg-1) 0%, var(--bg-2) 100%);
-    color:#fff;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    padding-bottom:92px;
-  }
+    .settings-btn { background:transparent; border:none; color:var(--muted); padding:8px; cursor:pointer; }
+    .settings-btn:focus { outline:none; }
 
-  /* glass base (matches current UI) */
-  .glass {
-    background: var(--glass);
-    backdrop-filter: blur(16px) saturate(160%);
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-    transition: box-shadow .24s ease, transform .22s ease, border-color .22s ease;
-  }
-  .glass:hover { box-shadow: 0 12px 36px rgba(0,0,0,0.32); transform: translateY(-2px); }
+    .balance-card { text-align:center; padding:28px 16px; border-radius:14px; }
+    #balance-amount { font-size:30px; font-weight:700; cursor:pointer; display:inline-block; transition: all .24s ease; }
+    #balance-amount.pulse { filter: drop-shadow(0 10px 28px var(--glow)); transform: scale(1.02); }
+    .balance-sub { color:var(--muted); font-size:13px; margin-top:8px; }
 
-  .container { max-width:420px; margin:0 auto; padding:16px; }
+    .actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:6px; }
+    .action-btn { padding:12px; border-radius:10px; background: rgba(255,255,255,0.03); display:flex; flex-direction:column; align-items:center; gap:6px; transition: all .18s ease; color:var(--muted); }
+    .action-btn:hover { background: rgba(255,255,255,0.06); color:#fff; box-shadow:0 10px 24px rgba(59,130,246,0.06); transform:translateY(-3px); }
+    .action-label { font-size:12px; }
 
-  /* header/profile */
-  .profile { display:flex; gap:12px; align-items:center; padding:12px; }
-  .avatar { width:44px; height:44px; border-radius:10px; object-fit:cover; border:1px solid rgba(255,255,255,0.06); }
-  .user-name { font-weight:600; font-size:15px; }
-  .user-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+    .assets-title { display:flex; justify-content:space-between; align-items:center; margin-top:12px; color:var(--muted); font-size:13px; }
+    .asset-card { padding:12px; border-radius:10px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.008)); border:1px solid rgba(255,255,255,0.02); display:flex; justify-content:space-between; align-items:center; transition:all .14s ease; }
+    .asset-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(2,6,23,0.45); }
+    .asset-left { display:flex; flex-direction:column; }
+    .asset-name { font-weight:600; }
+    .asset-sub { color:var(--muted); font-size:13px; }
 
-  /* settings icon (no glow as requested) */
-  .settings-btn { background:transparent; border:none; color:var(--muted); padding:8px; cursor:pointer; }
-  .settings-btn:focus { outline: none; }
+    #ton-panel { position:fixed; inset:0; display:none; align-items:flex-end; justify-content:center; z-index:60; background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); transition:opacity .28s ease; }
+    #ton-panel.active { display:flex; opacity:1; visibility:visible; }
+    .panel-content { width:100%; max-width:520px; background:var(--glass); border-radius:24px 24px 0 0; padding:20px; box-shadow: 0 -6px 40px rgba(0,0,0,0.6); border:1px solid var(--border); position:relative; }
+    .panel-glow { position:absolute; left:50%; transform:translateX(-50%); bottom:8px; width:78%; height:56px; border-radius:20px; background: linear-gradient(90deg, var(--glow), rgba(96,165,250,0.06)); filter: blur(22px); opacity:0.9; pointer-events:none; }
 
-  /* balance */
-  .balance-card { text-align:center; padding:28px 16px; border-radius:14px; }
-  #balance-amount { font-size:30px; font-weight:700; cursor:pointer; display:inline-block; transition: all .24s ease; }
-  #balance-amount.pulse { filter: drop-shadow(0 10px 28px var(--glow)); transform: scale(1.02); }
-  .balance-sub { color:var(--muted); font-size:13px; margin-top:8px; }
+    #success-banner { position: fixed; top:18%; left:50%; transform:translateX(-50%) scale(.98); padding:10px 14px; border-radius:12px; background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(96,165,250,0.08)); border:1px solid rgba(59,130,246,0.12); color:#fff; font-weight:600; box-shadow: 0 10px 30px rgba(2,6,23,0.6); opacity:0; transition: all .36s ease; z-index:120; pointer-events:none; }
+    #success-banner.show { opacity:1; transform:translateX(-50%) scale(1); }
+    #toast { position:fixed; top:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.6); padding:8px 12px; border-radius:10px; color:#fff; font-size:13px; opacity:0; transition:opacity .22s ease; z-index:220; }
+    #toast.show { opacity:1; }
 
-  /* actions */
-  .actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:6px; }
-  .action-btn { padding:12px; border-radius:10px; background: rgba(255,255,255,0.03); display:flex; flex-direction:column; align-items:center; gap:6px; transition: all .18s ease; color:var(--muted); }
-  .action-btn:hover { background: rgba(255,255,255,0.06); color:#fff; box-shadow:0 10px 24px rgba(59,130,246,0.06); transform:translateY(-3px); }
-  .action-label { font-size:12px; }
+    #settings-panel { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:150; background: rgba(0,0,0,0.6); }
+    .settings-card { width:92%; max-width:400px; padding:16px; border-radius:12px; background:var(--glass); border:1px solid var(--border); box-shadow:0 18px 40px rgba(0,0,0,0.6); }
 
-  /* assets list */
-  .assets-title { display:flex; justify-content:space-between; align-items:center; margin-top:12px; color:var(--muted); font-size:13px; }
-  .asset-card { padding:12px; border-radius:10px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.008)); border:1px solid rgba(255,255,255,0.02); display:flex; justify-content:space-between; align-items:center; transition:all .14s ease; }
-  .asset-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(2,6,23,0.45); }
-  .asset-left { display:flex; flex-direction:column; }
-  .asset-name { font-weight:600; }
-  .asset-sub { color:var(--muted); font-size:13px; }
+    .bottom-nav { position:fixed; bottom:12px; left:12px; right:12px; background: var(--glass); backdrop-filter: blur(14px); border-radius:14px; padding:10px 14px; border:1px solid rgba(255,255,255,0.04); z-index:100; display:flex; justify-content:space-around; box-shadow: 0 10px 30px rgba(2,6,23,0.6); }
+    .nav-btn { display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--muted); font-size:12px; }
+    .nav-btn.active { color:var(--accent); }
+    .nav-btn svg { transition: all .22s ease; }
+    .nav-btn.active svg { stroke:var(--accent); filter:drop-shadow(0 6px 20px var(--glow-strong)); }
 
-  /* panel TonConnect */
-  #ton-panel { position:fixed; inset:0; display:none; align-items:flex-end; justify-content:center; z-index:60; background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); transition:opacity .28s ease; }
-  #ton-panel.active { display:flex; opacity:1; visibility:visible; }
-  .panel-content { width:100%; max-width:520px; background:var(--glass); border-radius:24px 24px 0 0; padding:20px; box-shadow: 0 -6px 40px rgba(0,0,0,0.6); border:1px solid var(--border); position:relative; }
-  .panel-glow { position:absolute; left:50%; transform:translateX(-50%); bottom:8px; width:78%; height:56px; border-radius:20px; background: linear-gradient(90deg, var(--glow), rgba(96,165,250,0.06)); filter: blur(22px); opacity:0.9; pointer-events:none; }
+    .loading-spinner { border:3px solid rgba(255,255,255,0.08); border-top:3px solid var(--accent); border-radius:50%; width:28px; height:28px; animation:spin 1s linear infinite; margin:0 auto; }
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg);} }
 
-  /* success banner & toast */
-  #success-banner { position: fixed; top:18%; left:50%; transform:translateX(-50%) scale(.98); padding:10px 14px; border-radius:12px; background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(96,165,250,0.08)); border:1px solid rgba(59,130,246,0.12); color:#fff; font-weight:600; box-shadow: 0 10px 30px rgba(2,6,23,0.6); opacity:0; transition: all .36s ease; z-index:120; pointer-events:none; }
-  #success-banner.show { opacity:1; transform:translateX(-50%) scale(1); }
-  #toast { position:fixed; top:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.6); padding:8px 12px; border-radius:10px; color:#fff; font-size:13px; opacity:0; transition:opacity .22s ease; z-index:220; }
-  #toast.show { opacity:1; }
-
-  /* settings placeholder panel (future) */
-  #settings-panel { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:150; background: rgba(0,0,0,0.6); }
-  .settings-card { width:92%; max-width:400px; padding:16px; border-radius:12px; background:var(--glass); border:1px solid var(--border); box-shadow:0 18px 40px rgba(0,0,0,0.6); }
-
-  /* bottom nav (fixed) */
-  .bottom-nav { position:fixed; bottom:12px; left:12px; right:12px; background: var(--glass); backdrop-filter: blur(14px); border-radius:14px; padding:10px 14px; border:1px solid rgba(255,255,255,0.04); z-index:100; display:flex; justify-content:space-around; box-shadow: 0 10px 30px rgba(2,6,23,0.6); }
-  .nav-btn { display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--muted); font-size:12px; }
-  .nav-btn.active { color:var(--accent); }
-  .nav-btn svg{ transition: all .22s ease; }
-  .nav-btn.active svg{ stroke:var(--accent); filter:drop-shadow(0 6px 20px var(--glow-strong)); }
-
-  /* tiny spinner */
-  .loading-spinner { border:3px solid rgba(255,255,255,0.08); border-top:3px solid var(--accent); border-radius:50%; width:28px; height:28px; animation:spin 1s linear infinite; margin:0 auto; }
-  @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg);} }
-
-  @media (max-width:440px){ .container{padding:10px;} #balance-amount{font-size:26px;} }
-</style>
+    @media (max-width:440px){ .container{padding:10px;} #balance-amount{font-size:26px;} }
+  </style>
 </head>
 <body>
-<!-- toast & success -->
-<div id="toast" role="status" aria-hidden="true"></div>
-<div id="success-banner" aria-hidden="true"></div>
-
-<!-- settings placeholder panel -->
-<div id="settings-panel" aria-hidden="true">
-  <div class="settings-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-weight:700">Настройки</div>
-      <button id="close-settings" style="background:transparent;border:none;color:var(--muted);font-size:18px;">&times;</button>
-    </div>
-    <div style="margin-top:12px;color:var(--muted);font-size:14px;">
-      Панель настроек — заглушка. Здесь позже можно добавить: язык, валюты, уведомления и т.д.
-    </div>
-  </div>
-</div>
-
-<!-- main layout: keep layout exactly like current UI -->
-<main class="container" id="main-menu">
-  <!-- profile -->
-  <div class="glass profile">
-    <img id="user-photo" class="avatar" src="https://via.placeholder.com/80" alt="avatar">
-    <div style="flex:1; min-width:0;">
-      <div id="user-name" class="user-name">Загрузка...</div>
-      <div id="wallet-short" class="user-sub" style="display:none;"></div>
-    </div>
-    <!-- settings icon (no glow) -->
-    <button id="settings-btn" class="settings-btn" aria-label="Настройки">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
-    </button>
-  </div>
-
-  <!-- balance -->
-  <div class="glass balance-card">
-    <div>
-      <div id="balance-amount">$0.00</div>
-      <div class="balance-sub">Общий баланс</div>
+  <div id="toast" aria-hidden="true"></div>
+  <div id="success-banner" aria-hidden="true"></div>
+  <div id="settings-panel" aria-hidden="true">
+    <div class="settings-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:700">Настройки</div>
+        <button id="close-settings" style="background:transparent;border:none;color:var(--muted);font-size:18px;">&times;</button>
+      </div>
+      <div style="margin-top:12px;color:var(--muted);font-size:14px;">
+        Панель настроек — заглушка. Здесь позже можно добавить: язык, валюты, уведомления и т.д.
+      </div>
     </div>
   </div>
 
-  <!-- actions -->
-  <div class="actions">
-    <button class="action-btn" onclick="showToast('Отправка скоро будет доступна')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      <div class="action-label">Отправить</div>
-    </button>
-    <button class="action-btn" onclick="showToast('Получение скоро будет доступно')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-      <div class="action-label">Получить</div>
-    </button>
-    <button class="action-btn" onclick="showToast('Биржа скоро будет доступна')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <div class="action-label">Биржа</div>
-    </button>
-    <button class="action-btn" onclick="showToast('Обмен скоро будет доступен')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-      <div class="action-label">Обмен</div>
-    </button>
-  </div>
+  <main class="container" id="main-menu">
+    <div class="glass profile">
+      <img id="user-photo" class="avatar" src="https://via.placeholder.com/80" alt="avatar">
+      <div style="flex:1; min-width:0;">
+        <div id="user-name" class="user-name">Загрузка...</div>
+        <div id="wallet-short" class="user-sub" style="display:none;"></div>
+      </div>
+      <button id="settings-btn" class="settings-btn" aria-label="Настройки">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
 
-  <!-- assets header -->
-  <div class="assets-title">
-    <div style="font-weight:600">Активы</div>
-    <button onclick="showToast('Скрыть мелкие балансы - скоро')" class="text-blue-400 text-xs">Скрыть мелкие балансы</button>
-  </div>
-
-  <!-- assets list -->
-  <div id="assets" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;"></div>
-</main>
-
-<!-- TonConnect panel -->
-<div id="ton-panel" aria-hidden="true">
-  <div class="panel-content glass">
-    <button id="close-ton" class="absolute top-4 right-4 text-white/60 active:text-white text-2xl leading-none" aria-label="Закрыть">&times;</button>
-
-    <div style="display:flex; justify-content:center; margin-bottom:12px;">
-      <div style="width:72px; height:72px; border-radius:999px; background: linear-gradient(180deg,#2b6ef6,#3b82f6); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(59,130,246,0.12);">
-        <div style="width:40px; height:40px; border-radius:999px; background:#fff;"></div>
+    <div class="glass balance-card">
+      <div>
+        <div id="balance-amount">$0.00</div>
+        <div class="balance-sub">Общий баланс</div>
       </div>
     </div>
 
-    <h2 class="text-xl font-bold mb-2 text-center">Подключите TON-кошелёк</h2>
-    <p class="text-sm text-white/70 mb-6 text-center px-2 leading-relaxed">Подключив кошелёк, вы сможете использовать TON для переводов и покупок</p>
-
-    <div id="ton-connect-button" class="flex justify-center mb-4 min-h-[56px]">
-      <div class="loading-spinner" aria-hidden="true"></div>
+    <div class="actions">
+      <button class="action-btn" onclick="showToast('Отправка скоро будет доступна')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <div class="action-label">Отправить</div>
+      </button>
+      <button class="action-btn" onclick="showToast('Получение скоро будет доступно')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        <div class="action-label">Получить</div>
+      </button>
+      <button class="action-btn" onclick="showToast('Биржа скоро будет доступна')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <div class="action-label">Биржа</div>
+      </button>
+      <button class="action-btn" onclick="showToast('Обмен скоро будет доступен')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        <div class="action-label">Обмен</div>
+      </button>
     </div>
 
-    <button id="manual-connect" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 active:from-blue-600 active:to-blue-700 text-white font-semibold py-3.5 px-6 rounded-xl btn-glow mb-3 shadow-lg">Подключить кошелек</button>
-    <button id="skip-ton" class="w-full text-white/70 active:text-white text-sm py-2">Пропустить</button>
+    <div class="assets-title">
+      <div style="font-weight:600">Активы</div>
+      <button onclick="showToast('Скрыть мелкие балансы - скоро')" class="text-blue-400 text-xs">Скрыть мелкие балансы</button>
+    </div>
+    <div id="assets" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;"></div>
 
-    <div class="panel-glow" aria-hidden="true"></div>
+  </main>
+
+  <div id="ton-panel" aria-hidden="true">
+    <div class="panel-content glass">
+      <button id="close-ton" class="absolute top-4 right-4 text-white/60 active:text-white text-2xl leading-none" aria-label="Закрыть">&times;</button>
+      <div style="display:flex; justify-content:center; margin-bottom:12px;">
+        <div style="width:72px; height:72px; border-radius:999px; background: linear-gradient(180deg,#2b6ef6,#3b82f6); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(59,130,246,0.12);">
+          <div style="width:40px; height:40px; border-radius:999px; background:#fff;"></div>
+        </div>
+      </div>
+      <h2 class="text-xl font-bold mb-2 text-center">Подключите TON-кошелёк</h2>
+      <p class="text-sm text-white/70 mb-6 text-center px-2 leading-relaxed">Подключив кошелёк, вы сможете использовать TON для переводов и покупок</p>
+      <div id="ton-connect-button" class="flex justify-center mb-4 min-h-[56px]">
+        <div class="loading-spinner" aria-hidden="true"></div>
+      </div>
+      <button id="manual-connect" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 active:from-blue-600 active:to-blue-700 text-white font-semibold py-3.5 px-6 rounded-xl btn-glow mb-3 shadow-lg">Подключить кошелек</button>
+      <button id="skip-ton" class="w-full text-white/70 active:text-white text-sm py-2">Пропустить</button>
+      <div class="panel-glow" aria-hidden="true"></div>
+    </div>
   </div>
-</div>
 
-<!-- bottom nav (fixed) -->
-<nav class="bottom-nav" role="navigation">
-  <button class="nav-btn active" data-tab="home" aria-label="Главная">
-    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <div style="font-size:12px">Главная</div>
-  </button>
-  <button class="nav-btn" data-tab="transfer" aria-label="Переводы">
-    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    <div style="font-size:12px">Переводы</div>
-  </button>
-  <button class="nav-btn" data-tab="history" aria-label="История">
-    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    <div style="font-size:12px">История</div>
-  </button>
-  <button class="nav-btn" data-tab="profile" aria-label="Профиль">
-    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <div style="font-size:12px">Профиль</div>
-  </button>
-</nav>
+  <nav class="bottom-nav" role="navigation">
+    <button class="nav-btn active" data-tab="home">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <div style="font-size:12px">Главная</div>
+    </button>
+    <button class="nav-btn" data-tab="transfer">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div style="font-size:12px">Переводы</div>
+    </button>
+    <button class="nav-btn" data-tab="history">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <div style="font-size:12px">История</div>
+    </button>
+    <button class="nav-btn" data-tab="profile">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <div style="font-size:12px">Профиль</div>
+    </button>
+  </nav>
 
-<!-- TonConnect UI lib -->
-<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
-<script>
-/* =========== Config =========== */
-const MANIFEST_URL = 'https://sendingcrypto.vercel.app/tonconnect-manifest.json'; // <- проверь если домен другой
-const TONCENTER_BALANCE_ENDPOINT = 'https://toncenter.com/api/v2/getAddressBalance';
-const BINANCE_24 = 'https://api.binance.com/api/v3/ticker/24hr?symbol=';
-const BINANCE_PRICE = 'https://api.binance.com/api/v3/ticker/price?symbol=';
-const EXCHANGE_FALLBACK = 'https://api.exchangerate.host/latest?base=USD';
+  <script>
+    const MANIFEST_URL = 'https://sendingcrypto.vercel.app/tonconnect-manifest.json'; // поменяй, если нужно
+    const TONCENTER_BALANCE_ENDPOINT = 'https://toncenter.com/api/v2/getAddressBalance';
+    const BINANCE_24 = 'https://api.binance.com/api/v3/ticker/24hr?symbol=';
+    const BINANCE_PRICE = 'https://api.binance.com/api/v3/ticker/price?symbol=';
+    const EXCHANGE_FALLBACK = 'https://api.exchangerate.host/latest?base=USD';
 
-const CRYPTO_ASSETS = [
-  { symbol: 'BTCUSDT', label: 'Bitcoin', short: 'BTC' },
-  { symbol: 'ETHUSDT', label: 'Ethereum', short: 'ETH' },
-  { symbol: 'TONUSDT', label: 'Toncoin', short: 'TON' },
-  { symbol: 'SOLUSDT', label: 'Solana', short: 'SOL' },
-  { symbol: 'LTCUSDT', label: 'Litecoin', short: 'LTC' }
-];
+    const CRYPTO_ASSETS = [
+      { symbol: 'BTCUSDT', label: 'Bitcoin', short: 'BTC' },
+      { symbol: 'ETHUSDT', label: 'Ethereum', short: 'ETH' },
+      { symbol: 'TONUSDT', label: 'Toncoin', short: 'TON' },
+      { symbol: 'SOLUSDT', label: 'Solana', short: 'SOL' },
+      { symbol: 'LTCUSDT', label: 'Litecoin', short: 'LTC' }
+    ];
+    const CURRENCIES = ['USDT','TON','TRY','UAH','RUB'];
 
-const CURRENCIES = ['USDT','TON','TRY','UAH','RUB'];
+    let tonConnectUI = null;
+    let tonBalance = 0;
+    let tonPrice = null;
+    let fiatRates = {};
+    let currencyIndex = 0;
 
-/* =========== State =========== */
-let tonConnectUI = null;
-let tonBalance = 0;     // TON
-let tonPrice = null;    // TONUSDT price
-let fiatRates = {};     // USD -> TRY/UAH/RUB
-let currencyIndex = 0;
+    function showToast(text) {
+      const t = document.getElementById('toast');
+      t.textContent = text;
+      t.classList.add('show');
+      clearTimeout(t._t);
+      t._t = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+    function showSuccess(text) {
+      const s = document.getElementById('success-banner');
+      s.textContent = text;
+      s.classList.add('show');
+      clearTimeout(s._t);
+      s._t = setTimeout(() => s.classList.remove('show'), 2400);
+    }
 
-/* =========== UI Helpers =========== */
-function showToast(text){
-  const t = document.getElementById('toast');
-  t.textContent = text;
-  t.classList.add('show');
-  clearTimeout(t._t);
-  t._t = setTimeout(()=> t.classList.remove('show'), 2800);
-}
-function showSuccess(text){
-  const s = document.getElementById('success-banner');
-  s.textContent = text;
-  s.classList.add('show');
-  clearTimeout(s._t);
-  s._t = setTimeout(()=> s.classList.remove('show'), 2400);
-}
+    async function fetchBinance24(symbol) {
+      try {
+        const r = await fetch(BINANCE_24 + encodeURIComponent(symbol));
+        if (!r.ok) throw new Error('binance 24 failed');
+        return await r.json();
+      } catch (e) {
+        console.warn('binance24 failed', symbol, e);
+        return null;
+      }
+    }
+    async function fetchBinancePrice(symbol) {
+      try {
+        const r = await fetch(BINANCE_PRICE + encodeURIComponent(symbol));
+        if (!r.ok) throw new Error('binance price failed');
+        const j = await r.json();
+        return j && j.price ? Number(j.price) : null;
+      } catch (e) {
+        console.warn('binance price failed', symbol, e);
+        return null;
+      }
+    }
+    async function fetchFallbackRates() {
+      try {
+        const r = await fetch(EXCHANGE_FALLBACK);
+        if (!r.ok) throw new Error('fallback failed');
+        const j = await r.json();
+        return j.rates || {};
+      } catch (e) {
+        console.warn('fallback failed', e);
+        return {};
+      }
+    }
+    async function fetchTonBalance(addr) {
+      try {
+        const r = await fetch(`${TONCENTER_BALANCE_ENDPOINT}?address=${encodeURIComponent(addr)}`);
+        const j = await r.json();
+        if (j && j.ok && j.result) return Number(j.result) / 1e9;
+        return 0;
+      } catch (e) {
+        console.error('toncenter error', e);
+        return 0;
+      }
+    }
 
-/* =========== Binance & Toncenter fetchers =========== */
-async function fetchBinance24(symbol){
-  try{
-    const r = await fetch(BINANCE_24 + encodeURIComponent(symbol));
-    if(!r.ok) throw new Error('binance 24 failed');
-    return await r.json();
-  }catch(e){
-    console.warn('binance24 failed', symbol, e);
-    return null;
-  }
-}
-async function fetchBinancePrice(symbol){
-  try{
-    const r = await fetch(BINANCE_PRICE + encodeURIComponent(symbol));
-    if(!r.ok) throw new Error('binance price failed');
-    const j = await r.json();
-    return j && j.price ? Number(j.price) : null;
-  }catch(e){
-    console.warn('binance price failed', symbol, e);
-    return null;
-  }
-}
-async function fetchFallbackRates(){
-  try{
-    const r = await fetch(EXCHANGE_FALLBACK);
-    if(!r.ok) throw new Error('fallback failed');
-    const j = await r.json();
-    return j.rates || {};
-  }catch(e){
-    console.warn('fallback failed', e);
-    return {};
-  }
-}
-async function fetchTonBalance(addr){
-  try{
-    const r = await fetch(`${TONCENTER_BALANCE_ENDPOINT}?address=${encodeURIComponent(addr)}`);
-    const j = await r.json();
-    if(j && j.ok && j.result) return Number(j.result) / 1e9;
-    return 0;
-  }catch(e){
-    console.error('toncenter error', e);
-    return 0;
-  }
-}
+    async function loadAssets() {
+      const container = document.getElementById('assets');
+      container.innerHTML = '';
+      try {
+        const promises = CRYPTO_ASSETS.map(async a => {
+          const d = await fetchBinance24(a.symbol);
+          return {
+            ...a,
+            price: d && d.lastPrice ? Number(d.lastPrice) : 0,
+            change: d && d.priceChangePercent ? Number(d.priceChangePercent) : 0
+          };
+        });
+        const res = await Promise.all(promises);
+        container.innerHTML = res.map(renderAssetHtml).join('');
+      } catch(e) {
+        console.error('loadAssets error', e);
+      }
+    }
+    function renderAssetHtml(a) {
+      const changeColor = a.change >= 0 ? 'text-green-400' : 'text-red-400';
+      const arrow = a.change >= 0 ? '▲' : '▼';
+      const priceStr = a.price ? a.price.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:8 }) : '0.00';
+      return `
+        <div class="asset-card glass">
+          <div class="asset-left">
+            <div class="asset-name">${a.label}</div>
+            <div class="asset-sub">$${priceStr} <span class="${changeColor} ml-2">${arrow} ${Math.abs(a.change).toFixed(2)}%</span></div>
+          </div>
+          <div class="text-right">
+            <div class="font-medium">0 ${a.short}</div>
+            <div class="text-xs text-white/60">$0.00</div>
+          </div>
+        </div>
+      `;
+    }
 
-/* =========== Render assets =========== */
-async function loadAssets(){
-  const container = document.getElementById('assets');
-  container.innerHTML = ''; // loading
-  try{
-    const promises = CRYPTO_ASSETS.map(async asset => {
-      const data = await fetchBinance24(asset.symbol);
-      return {
-        ...asset,
-        price: data && data.lastPrice ? Number(data.lastPrice) : 0,
-        change: data && data.priceChangePercent ? Number(data.priceChangePercent) : 0
-      };
+    async function updateTonAndFiat() {
+      const p = await fetchBinancePrice('TONUSDT');
+      if (p) tonPrice = p;
+      const usdtTry = await fetchBinancePrice('USDTTRY');
+      const usdtUah = await fetchBinancePrice('USDTUAH');
+      const usdtRub = (await fetchBinancePrice('USDTRUB')) || null;
+      const fallback = await fetchFallbackRates();
+      fiatRates.TRY = usdtTry ? Number(usdtTry) : (fallback.TRY || 0);
+      fiatRates.UAH = usdtUah ? Number(usdtUah) : (fallback.UAH || 0);
+      fiatRates.RUB = usdtRub ? Number(usdtRub) : (fallback.RUB || 0);
+    }
+
+    function updateBalanceUI() {
+      const cur = CURRENCIES[currencyIndex];
+      const el = document.getElementById('balance-amount');
+      if (cur === 'TON') {
+        el.textContent = `${tonBalance.toFixed(4)} TON`;
+      } else if (cur === 'USDT') {
+        const usd = (tonPrice !== null) ? (tonBalance * tonPrice) : 0;
+        el.textContent = `$${usd.toFixed(2)}`;
+      } else {
+        const usd = (tonPrice !== null) ? (tonBalance * tonPrice) : 0;
+        const rate = fiatRates[cur] || 0;
+        el.textContent = rate ? `${(usd * rate).toFixed(2)} ${cur}` : 'Загрузка...';
+      }
+      el.classList.add('pulse');
+      setTimeout(()=> el.classList.remove('pulse'), 900);
+    }
+
+    document.addEventListener('click', e => {
+      if (e.target && e.target.id === 'balance-amount') {
+        currencyIndex = (currencyIndex + 1) % CURRENCIES.length;
+        updateBalanceUI();
+      }
     });
-    const results = await Promise.all(promises);
-    container.innerHTML = results.map(a => renderAssetHtml(a)).join('');
-  }catch(e){
-    console.error('loadAssets error', e);
-  }
-}
-function renderAssetHtml(a){
-  const changeColor = a.change >= 0 ? 'text-green-400' : 'text-red-400';
-  const arrow = a.change >= 0 ? '▲' : '▼';
-  const priceStr = a.price ? Number(a.price).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:8}) : '0.00';
-  return `
-    <div class="asset-card glass">
-      <div class="asset-left">
-        <div class="asset-name">${a.label}</div>
-        <div class="asset-sub">$${priceStr} <span class="${changeColor} ml-2">${arrow} ${Math.abs(a.change).toFixed(2)}%</span></div>
-      </div>
-      <div class="text-right">
-        <div class="font-medium">0 ${a.short}</div>
-        <div class="text-xs text-white/60">$0.00</div>
-      </div>
-    </div>
-  `;
-}
 
-/* =========== Prices updates (TON + fiat) =========== */
-async function updateTonAndFiat(){
-  // TON price
-  const p = await fetchBinancePrice('TONUSDT');
-  if(p) tonPrice = p;
-  // fiat via Binance (USDT pairs). Some pairs may not exist: fallback to exchangerate.host
-  const usdtTry = await fetchBinancePrice('USDTTRY');
-  const usdtUah = await fetchBinancePrice('USDTUAH');
-  const usdtRub = await fetchBinancePrice('USDTRUB') || await fetchBinancePrice('USDTBRL') || null;
-  const fallback = await fetchFallbackRates();
+    async function initTonConnect() {
+      let tries = 0;
+      while (!window.TonConnectUI && tries < 40) {
+        await new Promise(r => setTimeout(r, 100));
+        tries++;
+      }
+      if (!window.TonConnectUI) {
+        console.error('TonConnect UI not loaded');
+        showToast('Ошибка SDK: не удалось загрузить TonConnectUI');
+        document.getElementById('ton-panel').classList.add('active');
+        return;
+      }
 
-  fiatRates.TRY = usdtTry ? Number(usdtTry) : (fallback.TRY || 0);
-  fiatRates.UAH = usdtUah ? Number(usdtUah) : (fallback.UAH || 0);
-  fiatRates.RUB = usdtRub ? Number(usdtRub) : (fallback.RUB || 0);
-}
+      try {
+        tonConnectUI = new TonConnectUI({
+          manifestUrl: MANIFEST_URL,
+          buttonRootId: 'ton-connect-button'
+        });
+      } catch (e) {
+        console.error('Ошибка при инициализации TonConnectUI:', e);
+        showToast('Ошибка SDK: ' + (e.message || e));
+        document.getElementById('ton-panel').classList.add('active');
+        return;
+      }
 
-/* =========== Balance display =========== */
-function updateBalanceUI(){
-  const cur = CURRENCIES[currencyIndex];
-  const el = document.getElementById('balance-amount');
-  if(cur === 'TON'){
-    el.textContent = `${tonBalance.toFixed(4)} TON`;
-  } else if(cur === 'USDT'){
-    const usd = (tonPrice !== null) ? (tonBalance * tonPrice) : 0;
-    el.textContent = `$${usd.toFixed(2)}`;
-  } else {
-    const usd = (tonPrice !== null) ? (tonBalance * tonPrice) : 0;
-    const rate = fiatRates[cur] || 0;
-    el.textContent = rate ? `${(usd * rate).toFixed(2)} ${cur}` : 'Загрузка...';
-  }
-  // ton small card update if exists
-  const tonSmall = document.getElementById('ton-balance-small');
-  if(tonSmall) tonSmall.textContent = `${tonBalance.toFixed(4)} TON`;
-  const tonFiat = document.getElementById('ton-fiat-small');
-  if(tonFiat) tonFiat.textContent = `$${((tonPrice !== null) ? (tonBalance * tonPrice) : 0).toFixed(2)}`;
+      document.getElementById('manual-connect').onclick = async () => {
+        try {
+          const panel = document.getElementById('ton-panel');
+          panel.classList.remove('active');
+          panel.style.pointerEvents = 'none';
+          await new Promise(r => setTimeout(r, 360));
+          panel.style.display = 'none';
 
-  // pulse effect
-  const root = document.getElementById('balance-amount');
-  root.classList.add('pulse');
-  setTimeout(()=> root.classList.remove('pulse'), 900);
-}
+          await tonConnectUI.openModal();
+        } catch (err) {
+          console.error('openModal error:', err);
+          showToast('Ошибка SDK при openModal: ' + (err.message || err));
+          // попытка вернуть панель
+          const p = document.getElementById('ton-panel');
+          p.style.pointerEvents = 'auto';
+          p.style.display = '';
+          requestAnimationFrame(() => p.classList.add('active'));
+        }
+      };
 
-/* cycle currency */
-document.addEventListener('click', (e) => {
-  if(e.target && e.target.id === 'balance-amount') {
-    currencyIndex = (currencyIndex + 1) % CURRENCIES.length;
-    updateBalanceUI();
-  }
-});
+      tonConnectUI.onStatusChange(async wallet => {
+        if (wallet) {
+          try {
+            const addr = wallet.account.address;
+            localStorage.setItem('ton_wallet', addr);
+            const short = addr.slice(0,6) + '...' + addr.slice(-4);
+            document.getElementById('wallet-short').textContent = short;
+            document.getElementById('wallet-short').style.display = 'block';
 
-/* =========== TonConnect integration =========== */
-async function initTonConnect(){
-  // wait for TonConnectUI
-  let tries = 0;
-  while(!window.TonConnectUI && tries < 40){
-    await new Promise(r=>setTimeout(r,100)); tries++;
-  }
-  if(!window.TonConnectUI){
-    document.getElementById('ton-connect-button').innerHTML = '<div class="text-sm text-red-400">Ошибка загрузки SDK</div>';
-    return;
-  }
+            tonBalance = await fetchTonBalance(addr);
+            await updateTonAndFiat();
+            updateBalanceUI();
+            showSuccess('Кошелек успешно подключён');
 
-  tonConnectUI = new TonConnectUI({
-    manifestUrl: MANIFEST_URL,
-    buttonRootId: 'ton-connect-button'
-  });
+            const panel = document.getElementById('ton-panel');
+            panel.classList.remove('active');
+            setTimeout(()=> panel.style.display = 'none', 360);
+          } catch(e) {
+            console.error('onStatusChange error', e);
+          }
+        } else {
+          localStorage.removeItem('ton_wallet');
+          showToast('Кошелек отключён');
+        }
+      });
+    }
 
-  // manual connect (button)
-  document.getElementById('manual-connect').onclick = async () => {
-    try{
-      // hide panel smoothly
-      const panel = document.getElementById('ton-panel');
-      panel.classList.remove('active');
-      panel.style.pointerEvents = 'none';
-      await new Promise(r=>setTimeout(r,360));
-      panel.style.display = 'none';
-
-      await tonConnectUI.openModal();
-    }catch(err){
-      console.error('openModal error', err);
-      showToast('Ошибка подключения: ' + (err.message || err));
-      // restore
+    function openTonPanel() {
       const p = document.getElementById('ton-panel');
-      p.style.pointerEvents = 'auto';
-      p.style.display = '';
+      p.style.display = 'flex';
       requestAnimationFrame(()=> p.classList.add('active'));
     }
-  };
+    function closeTonPanel() {
+      const p = document.getElementById('ton-panel');
+      p.classList.remove('active');
+      setTimeout(()=> { p.style.display = 'none'; }, 320);
+    }
 
-  // on status change
-  tonConnectUI.onStatusChange(async (wallet) => {
-    if(wallet){
-      try{
-        const addr = wallet.account.address;
-        localStorage.setItem('ton_wallet', addr);
-        const short = addr.slice(0,6) + '...' + addr.slice(-4);
-        document.getElementById('wallet-short').textContent = short;
+    document.getElementById('settings-btn').addEventListener('click', () => {
+      showToast('Настройки скоро будут доступны');
+      const sp = document.getElementById('settings-panel');
+      sp.style.display = 'flex';
+    });
+    document.getElementById('close-settings').addEventListener('click', () => {
+      document.getElementById('settings-panel').style.display = 'none';
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showToast(btn.innerText.trim());
+      });
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        try { tg.ready(); tg.expand(); tg.setBackgroundColor('#14192a'); } catch(e) {}
+      }
+
+      if (tg?.initDataUnsafe?.user) {
+        const u = tg.initDataUnsafe.user;
+        document.getElementById('user-name').textContent = (u.first_name || '') + (u.last_name ? ' ' + u.last_name : '');
+        if (u.photo_url) document.getElementById('user-photo').src = u.photo_url;
+      } else {
+        document.getElementById('user-name').textContent = 'Demo User';
+      }
+
+      await loadAssets();
+      await updateTonAndFiat();
+      await initTonConnect();
+
+      const saved = localStorage.getItem('ton_wallet');
+      if (saved) {
+        document.getElementById('wallet-short').textContent = saved.slice(0,6) + '...' + saved.slice(-4);
         document.getElementById('wallet-short').style.display = 'block';
-
-        // fetch TON balance and prices
-        tonBalance = await fetchTonBalance(addr);
+        tonBalance = await fetchTonBalance(saved);
         await updateTonAndFiat();
         updateBalanceUI();
-        showSuccess('Кошелек успешно подключён');
+        const p = document.getElementById('ton-panel');
+        if (p) { p.style.display = 'none'; p.classList.remove('active'); }
+      } else {
+        openTonPanel();
+      }
 
-        // hide panel
-        const panel = document.getElementById('ton-panel');
-        panel.classList.remove('active');
-        setTimeout(()=> panel.style.display = 'none', 360);
-      }catch(e){ console.error('statusChange handler', e); }
-    } else {
-      localStorage.removeItem('ton_wallet');
-      showToast('Кошелек отключён');
-    }
-  });
-}
+      document.getElementById('skip-ton').onclick = closeTonPanel;
+      document.getElementById('close-ton').onclick = closeTonPanel;
+      document.getElementById('ton-panel').onclick = (e) => { if(e.target.id === 'ton-panel') closeTonPanel(); };
 
-/* =========== Panel open/close (Ton panel & Settings) =========== */
-function openTonPanel(){
-  const p = document.getElementById('ton-panel');
-  p.style.display = 'flex';
-  requestAnimationFrame(()=> p.classList.add('active'));
-}
-function closeTonPanel(){
-  const p = document.getElementById('ton-panel');
-  p.classList.remove('active');
-  setTimeout(()=> { p.style.display = 'none'; }, 320);
-}
+      setInterval(async () => {
+        await loadAssets();
+        await updateTonAndFiat();
+        updateBalanceUI();
+      }, 60000);
 
-/* settings */
-document.getElementById?.('settings-btn')?.addEventListener?.('click', ()=> {
-  // show toast and open settings placeholder
-  showToast('Настройки скоро будут доступны');
-  const sp = document.getElementById('settings-panel');
-  sp.style.display = 'flex';
-});
-document.getElementById?.('close-settings')?.addEventListener?.('click', ()=> {
-  document.getElementById('settings-panel').style.display = 'none';
-});
-
-/* =========== Bottom nav: visual switch =========== */
-document.querySelectorAll('.nav-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=> {
-    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    showToast(btn.innerText.trim());
-    // future: here we can switch sections by data-tab
-  });
-});
-
-/* =========== Init on DOMContentLoaded =========== */
-document.addEventListener('DOMContentLoaded', async () => {
-  // Telegram WebApp ready
-  const tg = window.Telegram?.WebApp;
-  if(tg){
-    try{ tg.ready(); tg.expand(); tg.setBackgroundColor('#14192a'); } catch(e){ /* ignore */ }
-  }
-
-  // show main initially already in DOM; fill user if exists
-  if(tg?.initDataUnsafe?.user){
-    const u = tg.initDataUnsafe.user;
-    document.getElementById('user-name').textContent = (u.first_name || '') + (u.last_name ? ' ' + u.last_name : '');
-    if(u.photo_url) document.getElementById('user-photo').src = u.photo_url;
-  } else {
-    document.getElementById('user-name').textContent = 'Demo User';
-  }
-
-  // load assets and prices
-  await loadAssets();
-
-  // init TON price & fiat
-  await updateTonAndFiat();
-
-  // init TonConnect UI
-  await initTonConnect();
-
-  // if wallet stored, restore and fetch balances
-  const saved = localStorage.getItem('ton_wallet');
-  if(saved){
-    document.getElementById('wallet-short').textContent = saved.slice(0,6) + '...' + saved.slice(-4);
-    document.getElementById('wallet-short').style.display = 'block';
-    tonBalance = await fetchTonBalance(saved);
-    await updateTonAndFiat();
-    updateBalanceUI();
-    // hide panel if visible
-    const p = document.getElementById('ton-panel');
-    if(p) { p.style.display = 'none'; p.classList.remove('active'); }
-  } else {
-    // show TonConnect panel
-    openTonPanel();
-  }
-
-  // wire panel buttons
-  document.getElementById('skip-ton').onclick = closeTonPanel;
-  document.getElementById('close-ton').onclick = closeTonPanel;
-  document.getElementById('ton-panel').onclick = (e)=>{ if(e.target.id === 'ton-panel') closeTonPanel(); };
-
-  // periodic refresh: assets every 60s, ton price every 60s, balance every 30s if wallet saved
-  setInterval(async ()=>{ await loadAssets(); await updateTonAndFiat(); updateBalanceUI(); }, 60000);
-  setInterval(async ()=>{
-    const w = localStorage.getItem('ton_wallet');
-    if(w){ tonBalance = await fetchTonBalance(w); updateBalanceUI(); }
-  },30000);
-});
-</script>
+      setInterval(async () => {
+        const w = localStorage.getItem('ton_wallet');
+        if (w) {
+          tonBalance = await fetchTonBalance(w);
+          updateBalanceUI();
+        }
+      }, 30000);
+    });
+  </script>
 </body>
 </html>
