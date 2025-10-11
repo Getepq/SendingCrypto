@@ -9,197 +9,261 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
-    :root { --bg:#14192a; --glass:rgba(23,28,46,0.7); --border:rgba(255,255,255,0.08); }
-    body { background: linear-gradient(180deg,#14192a 0%,#1b2236 100%); min-height:100vh; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#fff; padding-bottom:80px;}
-    .glass{background:var(--glass);backdrop-filter:blur(16px) saturate(160%);border:1px solid var(--border);border-radius:1rem;box-shadow:0 8px 30px rgba(0,0,0,.25);}
-    .loading-spinner{border:3px solid rgba(255,255,255,0.1);border-top:3px solid #60a5fa;border-radius:50%;width:32px;height:32px;animation:spin 1s linear infinite;margin:0 auto}
-    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-    #ton-panel{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;z-index:9999;align-items:flex-end;justify-content:center}
-    #ton-panel.active{display:flex}
-    .panel-content{width:100%;max-width:500px;background:var(--glass);backdrop-filter:blur(20px);border-radius:24px 24px 0 0;padding:24px;box-shadow:0 -4px 32px rgba(0,0,0,.5);border:1px solid var(--border);border-bottom:none}
-    #toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(55,65,81,.95);padding:12px 20px;border-radius:12px;color:#fff;opacity:0;pointer-events:none;transition:all .3s;z-index:10000}
-    #toast.show{opacity:1}
-    .hidden{display:none}
-    .manual-block{margin-top:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.03);text-align:center}
-    input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff}
-    button.btn{padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,#3b82f6,#2563eb);color:#fff;font-weight:600;cursor:pointer}
-    .small{font-size:13px;color:rgba(255,255,255,0.7)}
+    :root {
+      --bg: #14192a;
+      --glass: rgba(23, 28, 46, 0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --glow: rgba(80, 160, 255, 0.4);
+    }
+
+    body {
+      background: linear-gradient(180deg, #14192a 0%, #1b2236 100%);
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: white;
+      padding-bottom: 80px;
+    }
+
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(16px) saturate(160%);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-glow { transition: all 0.3s ease; }
+    .btn-glow:active { transform: scale(0.98); }
+
+    #ton-panel {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      z-index: 9999;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    #ton-panel.active { display: flex; }
+
+    .panel-content {
+      width: 100%;
+      max-width: 500px;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border-radius: 24px 24px 0 0;
+      padding: 24px;
+      box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.4s ease;
+      border: 1px solid var(--border);
+      border-bottom: none;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    #toast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(55, 65, 81, 0.95);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 10000;
+    }
+    #toast.show { opacity: 1; }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      padding: 12px 0;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: rgba(255,255,255,0.5);
+      transition: all 0.3s;
+    }
+    .nav-btn.active {
+      color: #60a5fa;
+    }
+
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      transition: all 0.3s;
+    }
+    .action-btn:active {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(0.98);
+    }
+
+    .loading-spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top: 3px solid #60a5fa;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
+
 <body>
-  <main id="main-menu" class="p-4" style="display:none;">
+
+  <!-- Главное меню -->
+  <main id="main-menu" class="p-4" style="display: none;">
     <div class="max-w-xl mx-auto space-y-4">
+
+      <!-- Профиль -->
       <div class="glass p-4 flex items-center gap-3">
-        <img id="user-photo" src="https://via.placeholder.com/80" alt="avatar" class="w-12 h-12 rounded-full border border-white/10 object-cover">
+        <img id="user-photo" src="https://via.placeholder.com/80" alt="avatar"
+          class="w-12 h-12 rounded-full border border-white/10 object-cover">
         <div class="flex-1 min-w-0">
           <div id="user-name" class="text-base font-semibold truncate">Загрузка...</div>
-          <div id="wallet-short" class="text-xs small mt-1 hidden"></div>
+          <div id="wallet-short" class="text-xs text-white/50 mt-1" style="display: none;"></div>
         </div>
       </div>
 
+      <!-- Баланс -->
       <div class="glass text-center py-8">
-        <div id="balance-amount" class="text-4xl font-bold mb-1">— TON</div>
-        <div class="text-sm small">Общий баланс</div>
+        <div class="text-4xl font-bold mb-1" id="balance-amount">$0.00</div>
+        <div class="text-sm text-white/60">Общий баланс</div>
       </div>
 
+      <!-- Список активов -->
       <div id="assets" class="space-y-3"></div>
+
     </div>
   </main>
 
-  <!-- TON-panel -->
+  <!-- Панель TON Connect -->
   <div id="ton-panel">
-    <div class="panel-content relative">
+    <div class="panel-content">
       <button id="close-ton" class="absolute top-4 right-4 text-white/60 active:text-white text-2xl leading-none">&times;</button>
 
       <div class="flex justify-center mb-6">
-        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-          <svg width="48" height="48" viewBox="0 0 56 56" fill="white"><path d="M28 56C43.464 56 56 43.464 56 28C56 12.536 43.464 0 28 0C12.536 0 0 12.536 0 28C0 43.464 12.536 56 28 56Z"/><path d="M37.56 15.63H18.44C14.92 15.63 12.69 19.42 14.46 22.49L26.26 42.94C27.03 44.28 28.96 44.28 29.73 42.94L41.54 22.49C43.3 19.42 41.08 15.63 37.56 15.63Z" fill="#0088CC"/></svg>
+        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
+          <svg width="48" height="48" viewBox="0 0 56 56" fill="white">
+            <path d="M28 56C43.464 56 56 43.464 56 28C56 12.536 43.464 0 28 0C12.536 0 0 12.536 0 28C0 43.464 12.536 56 28 56Z"/>
+            <path d="M37.56 15.63H18.44C14.92 15.63 12.69 19.42 14.46 22.49L26.26 42.94C27.03 44.28 28.96 44.28 29.73 42.94L41.54 22.49C43.3 19.42 41.08 15.63 37.56 15.63Z" fill="#0088CC"/>
+          </svg>
         </div>
       </div>
 
       <h2 class="text-xl font-bold mb-2 text-center">Подключите TON-кошелёк</h2>
-      <p class="text-sm small mb-6 text-center px-2 leading-relaxed">Подключив кошелёк, вы сможете использовать TON для переводов и покупок</p>
+      <p class="text-sm text-white/70 mb-6 text-center px-2 leading-relaxed">
+        Подключив кошелёк, вы сможете использовать TON для переводов и покупок
+      </p>
 
       <div id="ton-connect-button" class="flex justify-center mb-4 min-h-[56px]">
         <div class="loading-spinner"></div>
       </div>
 
-      <div class="flex gap-2">
-        <button id="manual-connect" class="btn" style="flex:1">Подключить кошелёк</button>
-        <button id="open-manual" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff">Вставить адрес</button>
-      </div>
+      <button id="manual-connect" 
+              class="w-full bg-gradient-to-r from-blue-500 to-blue-600 active:from-blue-600 active:to-blue-700 text-white font-semibold py-3.5 px-6 rounded-xl btn-glow mb-3 shadow-lg">
+        Подключить кошелёк
+      </button>
 
-      <div class="manual-block hidden" id="manual-block">
-        <div class="small">Если автоматическое подключение не работает — вставь адрес TON вручную</div>
-        <input id="manual-address" placeholder="EQ... или 0:..." type="text" />
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <button id="save-manual" class="btn" style="flex:1">Сохранить</button>
-          <button id="cancel-manual" class="btn" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.06)">Отмена</button>
-        </div>
-        <div class="small" style="margin-top:8px">Открой, например, <a href="https://tonkeeper.com" target="_blank" style="color:#9bd1ff">tonkeeper.com</a> на устройстве, скопируй адрес и вставь сюда.</div>
-      </div>
-
-      <button id="skip-ton" class="small" style="margin-top:12px;background:transparent;border:none;color:rgba(255,255,255,0.7)">Пропустить</button>
+      <button id="skip-ton" 
+              class="w-full text-white/70 active:text-white text-sm py-2">
+        Пропустить
+      </button>
     </div>
   </div>
 
   <div id="toast"></div>
 
-  <!-- Загрузка: сначала локальный SDK (на твоём домене), затем fallback на CDN -->
-  <script>
-    function showToast(text) {
-      const t = document.getElementById('toast');
-      t.textContent = text;
-      t.classList.add('show');
-      setTimeout(()=>t.classList.remove('show'),2800);
-    }
-
-    async function loadTonConnectScript() {
-      return new Promise((resolve, reject) => {
-        // попытка 1: локальный файл на том же домене
-        const local = document.createElement('script');
-        local.src = '/tonconnect-ui.min.js';
-        local.async = true;
-        local.onload = () => resolve('local');
-        local.onerror = () => {
-          // fallback: jsDelivr CDN
-          const cdn = document.createElement('script');
-          cdn.src = 'https://cdn.jsdelivr.net/npm/@tonconnect/ui@latest/dist/tonconnect-ui.min.js';
-          cdn.async = true;
-          cdn.onload = () => resolve('cdn');
-          cdn.onerror = () => reject(new Error('TonConnect SDK load failed (both local and CDN)'));
-          document.head.appendChild(cdn);
-        };
-        document.head.appendChild(local);
-      });
-    }
-  </script>
+  <!-- ✅ Используем локальный SDK (надёжно в Telegram) -->
+  <script src="/tonconnect-ui.min.js"></script>
 
   <script>
     const tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#14192a'); tg.setBackgroundColor('#14192a'); }
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      tg.setHeaderColor('#14192a');
+      tg.setBackgroundColor('#14192a');
+    }
 
     const storage = {
-      set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} },
-      get(k){ try{ return JSON.parse(localStorage.getItem(k)) }catch(e){ return null } },
-      remove(k){ try{ localStorage.removeItem(k) }catch(e){} }
+      set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
+      get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
+      remove(k){try{localStorage.removeItem(k)}catch(e){}}
     };
 
-    function shortAddr(a){
-      if(!a) return '';
-      return a.slice(0,6)+'...'+a.slice(-6);
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      toast.textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2800);
     }
 
-    async function getTonBalance(address) {
-      if(!address) return;
+    let tonConnectUI;
+
+    async function initTonConnect() {
       try {
-        // Попытка получить баланс через Toncenter API
-        const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${encodeURIComponent(address)}`);
-        const json = await res.json();
-        let nano = 0;
-        if (json && typeof json.result === 'number') nano = json.result;
-        else if (json && typeof json.balance === 'number') nano = json.balance;
-        else if (json && json.result && typeof json.result.balance === 'number') nano = json.result.balance;
-        const ton = nano / 1e9;
-        document.getElementById('balance-amount').textContent = ton.toFixed(4) + ' TON';
-      } catch (e) {
-        console.error('Ошибка получения баланса TON', e);
+        tonConnectUI = new TonConnectUI({
+          manifestUrl: 'https://sending-crypto.vercel.app/tonconnect-manifest.json',
+          buttonRootId: 'ton-connect-button'
+        });
+
+        document.getElementById('manual-connect').onclick = async () => {
+          try { await tonConnectUI.openModal(); }
+          catch (e) { showToast('Ошибка: ' + e.message); }
+        };
+
+        tonConnectUI.onStatusChange(wallet => {
+          if (wallet) {
+            const address = wallet.account.address;
+            storage.set('ton_wallet', address);
+            const short = address.slice(0, 4) + '...' + address.slice(-4);
+            document.getElementById('wallet-short').textContent = short;
+            document.getElementById('wallet-short').style.display = 'block';
+            closeTonPanel();
+            showToast(`Кошелёк подключён: ${short}`);
+          }
+        });
+
+      } catch (error) {
+        console.error('Ошибка TonConnect:', error);
+        document.getElementById('ton-connect-button').innerHTML = '<div class="text-sm text-red-400">Ошибка загрузки SDK</div>';
       }
     }
 
-    async function initTonFlow() {
-      // сначала попробуем загрузить SDK
-      let sdkSource = null;
-      try {
-        sdkSource = await loadTonConnectScript();
-        console.log('TonConnect loaded from', sdkSource);
-      } catch (e) {
-        console.warn('TonConnect SDK не загружен:', e);
-        document.getElementById('ton-connect-button').innerHTML = '<div class="small" style="color:#f87171">Ошибка загрузки SDK</div>';
-        // показываем блок ввода адреса вручную, оставляем кнопку "Вставить адрес"
-      }
-
-      // если SDK доступен — инициализируем TonConnectUI
-      if (typeof TonConnectUI !== 'undefined') {
-        try {
-          window.tonConnectUI = new TonConnectUI({
-            manifestUrl: 'https://sending-crypto.vercel.app/tonconnect-manifest.json',
-            buttonRootId: 'ton-connect-button'
-          });
-
-          document.getElementById('manual-connect').onclick = async () => {
-            try {
-              await window.tonConnectUI.openModal();
-            } catch (err) {
-              showToast('Ошибка: ' + (err?.message || err));
-            }
-          };
-
-          window.tonConnectUI.onStatusChange(async (wallet) => {
-            if (wallet) {
-              const address = wallet.account.address;
-              storage.set('ton_wallet', address);
-              document.getElementById('wallet-short').textContent = shortAddr(address);
-              document.getElementById('wallet-short').classList.remove('hidden');
-              await getTonBalance(address);
-              closeTonPanel();
-              showToast('Кошелёк подключён: ' + shortAddr(address));
-            } else {
-              // отключение (если нужно)
-              storage.remove('ton_wallet');
-            }
-          });
-
-        } catch (e) {
-          console.error('Ошибка инициализации TonConnectUI', e);
-        }
-      } else {
-        // SDK не доступен — показываем инструкцию и даём фолбек вставки адреса
-        document.getElementById('open-manual').classList.remove('hidden');
-      }
-    }
-
-    function closeTonPanel(){
+    function closeTonPanel() {
       document.getElementById('ton-panel').classList.remove('active');
       document.getElementById('main-menu').style.display = 'block';
     }
@@ -214,44 +278,25 @@
       }
     }
 
-    // события UI
     window.addEventListener('DOMContentLoaded', async () => {
       initUser();
 
-      const stored = storage.get('ton_wallet');
-      if (stored) {
-        document.getElementById('wallet-short').textContent = shortAddr(stored);
-        document.getElementById('wallet-short').classList.remove('hidden');
-        document.getElementById('main-menu').style.display = 'block';
-        await getTonBalance(stored);
+      const wallet = storage.get('ton_wallet');
+      if (wallet) {
+        closeTonPanel();
+        const short = wallet.slice(0, 4) + '...' + wallet.slice(-4);
+        document.getElementById('wallet-short').textContent = short;
+        document.getElementById('wallet-short').style.display = 'block';
       } else {
         document.getElementById('ton-panel').classList.add('active');
       }
 
-      document.getElementById('skip-ton').onclick = () => {
-        closeTonPanel();
+      await initTonConnect();
+      document.getElementById('skip-ton').onclick = closeTonPanel;
+      document.getElementById('close-ton').onclick = closeTonPanel;
+      document.getElementById('ton-panel').onclick = (e) => {
+        if (e.target.id === 'ton-panel') closeTonPanel();
       };
-      document.getElementById('close-ton').onclick = () => closeTonPanel();
-
-      // manual address UI
-      document.getElementById('open-manual').onclick = () => {
-        document.getElementById('manual-block').classList.toggle('hidden');
-      };
-      document.getElementById('cancel-manual').onclick = () => {
-        document.getElementById('manual-block').classList.add('hidden');
-      };
-      document.getElementById('save-manual').onclick = () => {
-        const val = document.getElementById('manual-address').value.trim();
-        if (!val) { showToast('Вставьте адрес'); return; }
-        storage.set('ton_wallet', val);
-        document.getElementById('wallet-short').textContent = shortAddr(val);
-        document.getElementById('wallet-short').classList.remove('hidden');
-        getTonBalance(val);
-        closeTonPanel();
-        showToast('Адрес сохранён');
-      };
-
-      await initTonFlow();
     });
   </script>
 </body>
