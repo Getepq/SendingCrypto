@@ -72,14 +72,8 @@
     }
 
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .fade {
@@ -110,7 +104,7 @@
 </head>
 
 <body class="antialiased text-white">
-  <main class="min-h-screen flex justify-center p-4">
+  <main id="main-menu" class="min-h-screen flex justify-center p-4 hidden">
     <div class="w-full max-w-sm space-y-5">
 
       <!-- Top Card -->
@@ -196,17 +190,33 @@
         <span class="text-sky-400 cursor-pointer" onclick="showToast()">Скрыть мелкие балансы</span>
       </div>
       <div id="assets" class="space-y-3 fade"></div>
-
-      <!-- 🔹 Кнопка подключения TON -->
-      <div id="connect-wallet" class="glass p-4 text-center btn-glow fade cursor-pointer">
-        <span class="text-sm font-semibold">Подключить TON-кошелёк</span>
-      </div>
-
     </div>
   </main>
 
+  <!-- 🔹 Панель подключения TON -->
+  <div id="ton-panel" class="fixed inset-x-0 bottom-0 bg-black/50 backdrop-blur-md flex justify-center items-end z-50 transition-all duration-300 hidden">
+    <div class="glass w-full max-w-sm rounded-t-3xl p-6 pb-8 text-center shadow-lg">
+      <div class="flex justify-center mb-4">
+        <img src="https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=029" alt="TON" class="w-14 h-14">
+      </div>
+      <h2 class="text-lg font-semibold mb-2">Подключите TON-кошелёк</h2>
+      <p class="text-sm text-white/60 mb-5">Чтобы получать, хранить и отправлять Toncoin, подключите кошелёк.</p>
+
+      <div id="ton-connect-button" class="glass p-3 rounded-xl btn-glow cursor-pointer mb-5">
+        <span class="font-semibold">Подключить TON-кошелёк</span>
+      </div>
+
+      <div class="flex justify-center gap-6 text-sm">
+        <button id="skip-ton" class="text-white/70 hover:text-white transition">Пропустить</button>
+        <button id="close-ton" class="text-white/70 hover:text-white transition">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast">Функция скоро будет доступна 🚀</div>
 
+  <!-- ✅ JS Логика -->
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <script>
     function showToast(text) {
       const toast = document.getElementById('toast');
@@ -215,45 +225,7 @@
       setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    const assets = [
-      { symbol: 'BTCUSDT', label: 'Bitcoin', short: 'BTC' },
-      { symbol: 'ETHUSDT', label: 'Ethereum', short: 'ETH' },
-      { symbol: 'LTCUSDT', label: 'Litecoin', short: 'LTC' },
-      { symbol: 'SOLUSDT', label: 'Solana', short: 'SOL' },
-      { symbol: 'TONUSDT', label: 'Toncoin', short: 'TON' }
-    ];
-
-    async function fetchBinancePrices() {
-      const container = document.getElementById('assets');
-      container.innerHTML = '';
-      for (const a of assets) {
-        const url = `https://api.binance.com/api/v3/ticker/24hr?symbol=${a.symbol}`;
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          const price = parseFloat(data.lastPrice).toFixed(2);
-          const change = parseFloat(data.priceChangePercent).toFixed(2);
-          const changeColor = change >= 0 ? 'text-green-400' : 'text-red-400';
-          const el = document.createElement('div');
-          el.className = 'glass p-4 flex justify-between items-center rounded-2xl btn-glow';
-          el.innerHTML = `
-            <div>
-              <div class="font-semibold">${a.label}</div>
-              <div class="text-xs text-white/60">$${price} <span class="${changeColor}">${change}%</span></div>
-            </div>
-            <div class="text-right">
-              <div class="text-sm font-medium">0 ${a.short}</div>
-              <div class="text-xs text-white/60">$0</div>
-            </div>`;
-          container.appendChild(el);
-        } catch (e) {
-          console.error('Ошибка при загрузке данных Binance:', e);
-        }
-      }
-    }
-
-    fetchBinancePrices();
-
+    // 🔹 Telegram User
     (function initTelegram() {
       const tg = window.Telegram?.WebApp;
       if (!tg) return;
@@ -263,28 +235,42 @@
         if (user.photo_url) document.getElementById('user-photo').src = user.photo_url;
       }
     })();
-  </script>
 
-  <!-- ✅ TonConnect SDK -->
-  <script type="module">
-    import { TonConnectUI } from "https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js";
+    // 🔹 Показываем или скрываем панель при загрузке
+    window.addEventListener('DOMContentLoaded', () => {
+      const wallet = localStorage.getItem('ton_wallet');
+      const tonPanel = document.getElementById('ton-panel');
+      const mainMenu = document.getElementById('main-menu');
 
-    const tonConnectUI = new TonConnectUI({
-      manifestUrl: "https://sending-crypto.vercel.app/tonconnect-manifest.json" // замените на ваш URL
+      if (wallet) {
+        mainMenu.classList.remove('hidden');
+      } else {
+        tonPanel.classList.remove('hidden');
+      }
+
+      document.getElementById('skip-ton').onclick = closeTonPanel;
+      document.getElementById('close-ton').onclick = closeTonPanel;
     });
 
-    tonConnectUI.createWalletButton('#connect-wallet');
+    function closeTonPanel() {
+      document.getElementById('ton-panel').classList.add('hidden');
+      document.getElementById('main-menu').classList.remove('hidden');
+    }
+
+    // 🔹 TonConnect SDK
+    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+      manifestUrl: "https://sending-crypto.vercel.app/tonconnect-manifest.json"
+    });
+
+    tonConnectUI.createWalletButton('#ton-connect-button');
 
     tonConnectUI.onStatusChange((wallet) => {
       if (wallet) {
-        console.log('✅ Подключен кошелёк:', wallet);
-        showToast(`Кошелёк подключен: ${wallet.account.address.slice(0, 12)}...`);
-      } else {
-        showToast('Кошелёк отключён');
+        localStorage.setItem('ton_wallet', wallet.account.address);
+        closeTonPanel();
+        showToast(`Кошелёк подключен: ${wallet.account.address.slice(0, 10)}...`);
       }
     });
   </script>
 </body>
 </html>
-
-
