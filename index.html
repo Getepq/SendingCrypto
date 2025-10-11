@@ -57,6 +57,7 @@
       animation: slideUp 0.5s ease forwards;
     }
 
+    /* Toast */
     #toast {
       position: fixed;
       bottom: 24px;
@@ -74,7 +75,7 @@
     }
     #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-    /* Свечение панели */
+    /* Glow */
     .panel-glow {
       box-shadow: 0 0 25px rgba(80, 160, 255, 0.25), inset 0 0 12px rgba(255, 255, 255, 0.05);
     }
@@ -147,14 +148,14 @@
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
   <script>
-    /* ==================== STORAGE ==================== */
+    /* Storage */
     const storage = {
       set(k,v){localStorage.setItem(k,JSON.stringify(v))},
       get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
       remove(k){localStorage.removeItem(k)}
     };
 
-    /* ==================== TOAST ==================== */
+    /* Toast */
     function showToast(text) {
       const toast = document.getElementById('toast');
       if (text) toast.textContent = text;
@@ -162,7 +163,7 @@
       setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    /* ==================== BINANCE ==================== */
+    /* Binance Data */
     async function loadFromBinance() {
       const assets = [
         { symbol: 'BTCUSDT', label: 'Bitcoin', short: 'BTC' },
@@ -215,7 +216,7 @@
       storage.set('binance_cache_time', Date.now());
     }
 
-    /* ==================== TELEGRAM INIT ==================== */
+    /* Telegram init */
     (function initTelegram(){
       const tg = window.Telegram?.WebApp;
       if(!tg)return;
@@ -226,7 +227,7 @@
       }
     })();
 
-    /* ==================== LOGIC ==================== */
+    /* Main logic */
     window.addEventListener('DOMContentLoaded', async () => {
       const wallet = storage.get('ton_wallet');
       const tonPanel = document.getElementById('ton-panel');
@@ -260,31 +261,41 @@
       };
     });
 
-    /* ==================== TONCONNECT ==================== */
-    const TonConnect = window.TON_CONNECT_UI?.TonConnectUI || window.TonConnectUI;
-    const tonConnectUI = new TonConnect({
-      manifestUrl: "https://sending-crypto.vercel.app/tonconnect-manifest.json"
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      tonConnectUI.createWalletButton('#ton-connect-button');
-    });
-
-    tonConnectUI.onStatusChange((wallet) => {
-      if (wallet) {
-        storage.set('ton_wallet', wallet.account.address);
-        document.getElementById('ton-panel').classList.remove('active');
-        const mainMenu = document.getElementById('main-menu');
-        mainMenu.classList.remove('hidden');
-        setTimeout(()=>mainMenu.classList.add('visible'),50);
-        fetchBinancePrices();
-        const short = wallet.account.address.slice(0,6)+'...'+wallet.account.address.slice(-4);
-        const w = document.getElementById('wallet-short');
-        w.textContent = short;
-        w.classList.remove('hidden');
-        showToast(`Кошелёк: ${short}`);
+    /* ✅ Fixed TONCONNECT Initialization */
+    async function initTonConnect() {
+      // ждём загрузки SDK
+      while (!window.TON_CONNECT_UI?.TonConnectUI && !window.TonConnectUI) {
+        await new Promise(r => setTimeout(r, 100));
       }
-    });
+
+      const TonConnect = window.TON_CONNECT_UI?.TonConnectUI || window.TonConnectUI;
+
+      const tonConnectUI = new TonConnect({
+        manifestUrl: "https://sending-crypto.vercel.app/tonconnect-manifest.json"
+      });
+
+      // создаём кнопку
+      const target = document.querySelector('#ton-connect-button');
+      if (target) tonConnectUI.createWalletButton(target);
+
+      tonConnectUI.onStatusChange((wallet) => {
+        if (wallet) {
+          storage.set('ton_wallet', wallet.account.address);
+          document.getElementById('ton-panel').classList.remove('active');
+          const mainMenu = document.getElementById('main-menu');
+          mainMenu.classList.remove('hidden');
+          setTimeout(()=>mainMenu.classList.add('visible'),50);
+          fetchBinancePrices();
+          const short = wallet.account.address.slice(0,6)+'...'+wallet.account.address.slice(-4);
+          const w = document.getElementById('wallet-short');
+          w.textContent = short;
+          w.classList.remove('hidden');
+          showToast(`Кошелёк: ${short}`);
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initTonConnect);
   </script>
 </body>
 </html>
