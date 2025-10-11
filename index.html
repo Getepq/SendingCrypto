@@ -1,143 +1,409 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sending Crypto</title>
-  <script src="https://unpkg.com/@tonconnect/sdk@latest"></script>
-  <style>
-    body {
-      background: radial-gradient(circle at top, #1e1f26, #0d0d0f);
-      color: white;
-      font-family: "Inter", sans-serif;
-      text-align: center;
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .container {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 30px;
-      border-radius: 20px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-      width: 90%;
-      max-width: 400px;
-    }
-
-    button {
-      background: #0088cc;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 12px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 10px;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: #00aaff;
-    }
-
-    #balance-amount {
-      font-size: 18px;
-      margin-top: 10px;
-      color: #7dd3fc;
-    }
-
-    #wallet-address {
-      margin-top: 8px;
-      font-size: 14px;
-      opacity: 0.7;
-      word-break: break-all;
-    }
-
-    #status {
-      margin-top: 20px;
-      color: #f87171;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SendingCrypto</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f1419;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #1a1f26;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .menu-btn {
+            background: none;
+            border: none;
+            color: #8899a6;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        /* Модальное окно */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal {
+            background: #1e2732;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 500px;
+            padding: 30px 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #8899a6;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+        }
+        
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #0088cc, #229ed9);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-icon svg {
+            width: 50px;
+            height: 50px;
+            fill: white;
+        }
+        
+        .modal h2 {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .modal p {
+            text-align: center;
+            color: #8899a6;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+        
+        .modal-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #7b3ff2, #9c6ade);
+            color: white;
+        }
+        
+        .modal-btn.secondary {
+            background: transparent;
+            color: #8899a6;
+        }
+        
+        .bot-link {
+            text-align: center;
+            color: #8899a6;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        
+        /* Success checkmark animation */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .success-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .success-checkmark {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #4caf50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: scale(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .success-overlay.active .success-checkmark {
+            transform: scale(1);
+            animation: pulse 0.5s ease;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .success-checkmark svg {
+            width: 60px;
+            height: 60px;
+            stroke: white;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+        }
+        
+        .success-overlay.active .success-checkmark svg {
+            animation: draw 0.5s ease forwards 0.2s;
+        }
+        
+        @keyframes draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        .wallet-info {
+            background: #1e2732;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .wallet-info.active {
+            display: block;
+        }
+        
+        .wallet-address {
+            word-break: break-all;
+            color: #8899a6;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>💎 Sending Crypto</h1>
-
-    <div id="wallet-section">
-      <button id="connect-button">Подключить TON кошелёк</button>
-      <p id="wallet-address"></p>
-      <p id="balance-amount"></p>
+    <!-- Audio элемент для звука -->
+    <audio id="successSound">
+        <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3" type="audio/mpeg">
+    </audio>
+    
+    <div class="header">
+        <h1>SendingCrypto</h1>
+        <button class="menu-btn">⋮</button>
+    </div>
+    
+    <div class="content">
+        <button id="connectWalletBtn" class="modal-btn primary" style="max-width: 300px; margin: 20px auto; display: block;">
+            Подключить кошелёк
+        </button>
+        
+        <div class="wallet-info" id="walletInfo">
+            <h3>Кошелёк подключён</h3>
+            <div class="wallet-address" id="walletAddress"></div>
+            <button id="disconnectBtn" class="modal-btn secondary" style="margin-top: 15px;">
+                Отключить кошелёк
+            </button>
+        </div>
+    </div>
+    
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <button class="modal-close" id="modalClose">×</button>
+            <div class="modal-icon">
+                <svg viewBox="0 0 56 56">
+                    <path d="M28,0C12.5,0,0,12.5,0,28s12.5,28,28,28s28-12.5,28-28S43.5,0,28,0z M28,6c5.4,0,10.4,2,14.2,5.2l-4.2,4.2 c-2.8-2.2-6.3-3.4-10-3.4c-8.8,0-16,7.2-16,16s7.2,16,16,16s16-7.2,16-16c0-3.7-1.3-7.2-3.4-10l4.2-4.2C47,17.6,50,22.6,50,28 c0,12.1-9.9,22-22,22S6,40.1,6,28S15.9,6,28,6z"/>
+                </svg>
+            </div>
+            <h2>Подключить TON кошелёк</h2>
+            <p>Подключите кошелёк, вы сможете использовать TON-адрес для переводов и авторизации. Можно пропустить.</p>
+            <button class="modal-btn primary" id="connectTonBtn">Подключить TON кошелёк</button>
+            <button class="modal-btn secondary" id="skipBtn">Пропустить</button>
+            <div class="bot-link">@SendingCrypto_bot</div>
+        </div>
+    </div>
+    
+    <!-- Success overlay -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-checkmark">
+            <svg viewBox="0 0 52 52">
+                <polyline points="14 27 22 35 38 19"/>
+            </svg>
+        </div>
     </div>
 
-    <p id="status"></p>
-  </div>
-
-  <script>
-    const connectButton = document.getElementById('connect-button');
-    const walletAddressEl = document.getElementById('wallet-address');
-    const balanceAmountEl = document.getElementById('balance-amount');
-    const statusEl = document.getElementById('status');
-
-    let tonConnect;
-
-    async function initTonConnect() {
-      try {
-        tonConnect = new TON_CONNECT_TonConnect({
-          manifestUrl: "https://sending-crypto.vercel.app/tonconnect-manifest.json"
+    <script>
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        
+        // Инициализация TON Connect UI
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: 'https://raw.githubusercontent.com/Getepq/SendingCrypto/main/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect-button'
         });
-
-        const wallet = tonConnect.wallet;
-        if (wallet) {
-          onWalletConnected(wallet.account.address);
+        
+        // Элементы
+        const modal = document.getElementById('modalOverlay');
+        const modalClose = document.getElementById('modalClose');
+        const connectWalletBtn = document.getElementById('connectWalletBtn');
+        const connectTonBtn = document.getElementById('connectTonBtn');
+        const skipBtn = document.getElementById('skipBtn');
+        const successOverlay = document.getElementById('successOverlay');
+        const successSound = document.getElementById('successSound');
+        const walletInfo = document.getElementById('walletInfo');
+        const walletAddress = document.getElementById('walletAddress');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        
+        // Проверка подключения при загрузке
+        tonConnectUI.onStatusChange((wallet) => {
+            if (wallet) {
+                updateWalletUI(wallet);
+            } else {
+                walletInfo.classList.remove('active');
+                connectWalletBtn.style.display = 'block';
+            }
+        });
+        
+        // Открыть модальное окно
+        connectWalletBtn.addEventListener('click', () => {
+            modal.classList.add('active');
+        });
+        
+        // Закрыть модальное окно
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+        
+        skipBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+        
+        // Закрыть при клике вне модального окна
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+        
+        // Подключить TON кошелёк
+        connectTonBtn.addEventListener('click', async () => {
+            try {
+                const connectedWallet = await tonConnectUI.connectWallet();
+                
+                // Закрыть модальное окно
+                modal.classList.remove('active');
+                
+                // Показать успешное подключение
+                showSuccess();
+                
+                // Обновить UI
+                setTimeout(() => {
+                    updateWalletUI(connectedWallet);
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Ошибка подключения:', error);
+                tg.showAlert('Не удалось подключить кошелёк. Попробуйте снова.');
+            }
+        });
+        
+        // Отключить кошелёк
+        disconnectBtn.addEventListener('click', async () => {
+            try {
+                await tonConnectUI.disconnect();
+                walletInfo.classList.remove('active');
+                connectWalletBtn.style.display = 'block';
+                tg.showAlert('Кошелёк отключён');
+            } catch (error) {
+                console.error('Ошибка отключения:', error);
+            }
+        });
+        
+        // Показать анимацию успеха
+        function showSuccess() {
+            successOverlay.classList.add('active');
+            
+            // Воспроизвести звук
+            successSound.play().catch(err => {
+                console.log('Не удалось воспроизвести звук:', err);
+            });
+            
+            // Скрыть через 1.5 секунды
+            setTimeout(() => {
+                successOverlay.classList.remove('active');
+            }, 1500);
         }
-
-        connectButton.addEventListener('click', async () => {
-          try {
-            const connectedWallet = await tonConnect.connectWallet();
-            onWalletConnected(connectedWallet.account.address);
-          } catch (err) {
-            statusEl.textContent = "❌ Не удалось подключить кошелёк";
-            console.warn(err);
-          }
-        });
-      } catch (err) {
-        console.error("TON Connect недоступен:", err);
-        statusEl.textContent = "TON Connect недоступен";
-      }
-    }
-
-    async function onWalletConnected(address) {
-      walletAddressEl.textContent = "Адрес: " + address;
-      connectButton.textContent = "✅ Кошелёк подключен";
-      connectButton.disabled = true;
-      await updateTonBalance(address);
-    }
-
-    async function updateTonBalance(address) {
-      try {
-        const res = await fetch(`https://toncenter.com/api/v2/getAddressInformation?address=${encodeURIComponent(address)}`);
-        const j = await res.json();
-        const nano = parseInt(j.result?.balance || j.balance || 0, 10) || 0;
-        const ton = nano / 1e9;
-        balanceAmountEl.textContent = ton.toFixed(6) + ' TON';
-      } catch (e) {
-        console.warn('Cannot fetch TON balance', e);
-        balanceAmountEl.textContent = "Ошибка при получении баланса";
-      }
-    }
-
-    class TON_CONNECT_TonConnect extends TonConnect {
-      constructor(config) {
-        super(config);
-      }
-    }
-
-    initTonConnect();
-  </script>
+        
+        // Обновить UI с информацией о кошельке
+        function updateWalletUI(wallet) {
+            const address = wallet.account.address;
+            const shortAddress = address.slice(0, 6) + '...' + address.slice(-4);
+            
+            walletAddress.textContent = shortAddress;
+            walletInfo.classList.add('active');
+            connectWalletBtn.style.display = 'none';
+        }
+    </script>
 </body>
 </html>
