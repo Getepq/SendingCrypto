@@ -155,12 +155,65 @@
           <div id="user-name" class="text-base font-semibold truncate">Загрузка...</div>
           <div id="wallet-short" class="text-xs text-white/50 mt-1" style="display: none;"></div>
         </div>
+        <button onclick="showToast('Настройки скоро будут доступны')" 
+                class="p-3 rounded-xl bg-white/5 active:bg-white/10 btn-glow">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
       </div>
 
       <!-- Баланс -->
       <div class="glass text-center py-8">
         <div class="text-4xl font-bold mb-1" id="balance-amount">$0.00</div>
         <div class="text-sm text-white/60">Общий баланс</div>
+      </div>
+
+      <!-- Действия -->
+      <div class="grid grid-cols-4 gap-2">
+        <button class="action-btn" onclick="showToast('Отправка скоро будет доступна')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          <span class="text-xs">Отправить</span>
+        </button>
+
+        <button class="action-btn" onclick="showToast('Получение скоро будет доступно')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <polyline points="19 12 12 19 5 12"/>
+          </svg>
+          <span class="text-xs">Получить</span>
+        </button>
+
+        <button class="action-btn" onclick="showToast('Биржа скоро будет доступна')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <span class="text-xs">Биржа</span>
+        </button>
+
+        <button class="action-btn" onclick="showToast('Обмен скоро будет доступен')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="17 1 21 5 17 9"/>
+            <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <polyline points="7 23 3 19 7 15"/>
+            <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+          <span class="text-xs">Обмен</span>
+        </button>
+      </div>
+
+      <!-- Заголовок активов -->
+      <div class="flex justify-between items-center text-sm">
+        <span class="text-white/70 font-medium">Активы</span>
+        <button onclick="showToast('Функция скоро будет доступна 🚀')" 
+                class="text-sky-400 active:text-sky-300 text-xs">
+          Скрыть мелкие балансы
+        </button>
       </div>
 
       <!-- Список активов -->
@@ -204,10 +257,47 @@
     </div>
   </div>
 
+  <!-- Нижняя навигация -->
+  <div class="bottom-nav">
+    <div class="flex justify-around items-center px-4">
+      <button class="nav-btn active">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span class="text-xs">Главная</span>
+      </button>
+
+      <button class="nav-btn" onclick="showToast('Переводы скоро будут доступны')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span class="text-xs">Переводы</span>
+      </button>
+
+      <button class="nav-btn" onclick="showToast('История скоро будет доступна')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span class="text-xs">История</span>
+      </button>
+
+      <button class="nav-btn" onclick="showToast('Профиль скоро будет доступен')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span class="text-xs">Профиль</span>
+      </button>
+    </div>
+  </div>
+
   <div id="toast"></div>
 
-  <!-- ✅ Используем локальный SDK (надёжно в Telegram) -->
-  <script src="/tonconnect-ui.min.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
   <script>
     const tg = window.Telegram?.WebApp;
@@ -231,73 +321,51 @@
       setTimeout(() => toast.classList.remove('show'), 2800);
     }
 
-    let tonConnectUI;
+    const CRYPTO_ASSETS = [
+      { symbol: 'BTCUSDT', label: 'Bitcoin', short: 'BTC', icon: '' },
+      { symbol: 'ETHUSDT', label: 'Ethereum', short: 'ETH', icon: '' },
+      { symbol: 'TONUSDT', label: 'Toncoin', short: 'TON', icon: '' },
+      { symbol: 'SOLUSDT', label: 'Solana', short: 'SOL', icon: '' },
+      { symbol: 'LTCUSDT', label: 'Litecoin', short: 'LTC', icon: '' }
+    ];
 
-    async function initTonConnect() {
+    async function fetchBinancePrices() {
+      const container = document.getElementById('assets');
+      
       try {
-        tonConnectUI = new TonConnectUI({
-          manifestUrl: 'https://sending-crypto.vercel.app/tonconnect-manifest.json',
-          buttonRootId: 'ton-connect-button'
-        });
+        const promises = CRYPTO_ASSETS.map(asset =>
+          fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${asset.symbol}`)
+            .then(r => r.json())
+            .then(data => ({
+              ...asset,
+              price: parseFloat(data.lastPrice),
+              change: parseFloat(data.priceChangePercent)
+            }))
+            .catch(() => ({
+              ...asset,
+              price: 0,
+              change: 0
+            }))
+        );
 
-        document.getElementById('manual-connect').onclick = async () => {
-          try { await tonConnectUI.openModal(); }
-          catch (e) { showToast('Ошибка: ' + e.message); }
-        };
-
-        tonConnectUI.onStatusChange(wallet => {
-          if (wallet) {
-            const address = wallet.account.address;
-            storage.set('ton_wallet', address);
-            const short = address.slice(0, 4) + '...' + address.slice(-4);
-            document.getElementById('wallet-short').textContent = short;
-            document.getElementById('wallet-short').style.display = 'block';
-            closeTonPanel();
-            showToast(`Кошелёк подключён: ${short}`);
-          }
-        });
-
+        const results = await Promise.all(promises);
+        renderAssets(results);
       } catch (error) {
-        console.error('Ошибка TonConnect:', error);
-        document.getElementById('ton-connect-button').innerHTML = '<div class="text-sm text-red-400">Ошибка загрузки SDK</div>';
+        console.error('Ошибка загрузки цен:', error);
       }
     }
 
-    function closeTonPanel() {
-      document.getElementById('ton-panel').classList.remove('active');
-      document.getElementById('main-menu').style.display = 'block';
-    }
-
-    function initUser() {
-      const user = tg?.initDataUnsafe?.user;
-      if (user) {
-        document.getElementById('user-name').textContent = user.first_name || 'Пользователь';
-        if (user.photo_url) document.getElementById('user-photo').src = user.photo_url;
-      } else {
-        document.getElementById('user-name').textContent = 'Demo User';
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      initUser();
-
-      const wallet = storage.get('ton_wallet');
-      if (wallet) {
-        closeTonPanel();
-        const short = wallet.slice(0, 4) + '...' + wallet.slice(-4);
-        document.getElementById('wallet-short').textContent = short;
-        document.getElementById('wallet-short').style.display = 'block';
-      } else {
-        document.getElementById('ton-panel').classList.add('active');
-      }
-
-      await initTonConnect();
-      document.getElementById('skip-ton').onclick = closeTonPanel;
-      document.getElementById('close-ton').onclick = closeTonPanel;
-      document.getElementById('ton-panel').onclick = (e) => {
-        if (e.target.id === 'ton-panel') closeTonPanel();
-      };
-    });
-  </script>
-</body>
-</html>
+    function renderAssets(data) {
+      const container = document.getElementById('assets');
+      container.innerHTML = data.map(asset => {
+        const changeColor = asset.change >= 0 ? 'text-green-400' : 'text-red-400';
+        const changeIcon = asset.change >= 0 ? '↑' : '↓';
+        return `
+          <div class="glass p-4 rounded-xl btn-glow cursor-pointer">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-3">
+                ${asset.icon ? `<div class="text-2xl">${asset.icon}</div>` : ''}
+                <div>
+                  <div class="font-semibold text-base">${asset.label}</div>
+                  <div class="text-sm text-white/60">
+                    $${asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits:
