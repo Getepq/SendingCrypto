@@ -290,12 +290,13 @@ function showToast(text) {
   setTimeout(() => toast.classList.remove('show'), 2800);
 }
 const CRYPTO_ASSETS = [
-  { symbol: 'BTCUSDT', label: 'Bitcoin', short: 'BTC', icon: '₿' },
-  { symbol: 'ETHUSDT', label: 'Ethereum', short: 'ETH', icon: 'Ξ' },
-  { symbol: 'TONUSDT', label: 'Toncoin', short: 'TON', icon: '💎' },
-  { symbol: 'SOLUSDT', label: 'Solana', short: 'SOL', icon: '◎' },
-  { symbol: 'LTCUSDT', label: 'Litecoin', short: 'LTC', icon: 'Ł' }
+  { symbol: 'BTCUSDT', label: 'Bitcoin', short: 'BTC', icon: '' },
+  { symbol: 'ETHUSDT', label: 'Ethereum', short: 'ETH', icon: '' },
+  { symbol: 'TONUSDT', label: 'Toncoin', short: 'TON', icon: '' },
+  { symbol: 'SOLUSDT', label: 'Solana', short: 'SOL', icon: '' },
+  { symbol: 'LTCUSDT', label: 'Litecoin', short: 'LTC', icon: '' }
 ];
+
 async function fetchBinancePrices() {
   const container = document.getElementById('assets');
   try {
@@ -416,3 +417,4 @@ window.addEventListener('DOMContentLoaded', async () => {
 </script>
 </body>
 </html>
+
