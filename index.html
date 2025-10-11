@@ -1,410 +1,262 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SendingCrypto</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f1419;
-            color: #fff;
-            overflow-x: hidden;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: #1a1f26;
-        }
-        
-        .header h1 {
-            font-size: 18px;
-            font-weight: 600;
-        }
-        
-        .menu-btn {
-            background: none;
-            border: none;
-            color: #8899a6;
-            font-size: 24px;
-            cursor: pointer;
-        }
-        
-        .content {
-            padding: 20px;
-        }
-        
-        /* Модальное окно */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        .modal {
-            background: #1e2732;
-            border-radius: 20px 20px 0 0;
-            width: 100%;
-            max-width: 500px;
-            padding: 30px 20px;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-            position: relative;
-        }
-        
-        .modal-overlay.active .modal {
-            transform: translateY(0);
-        }
-        
-        .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            color: #8899a6;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 5px;
-            line-height: 1;
-        }
-        
-        .modal-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #0088cc, #229ed9);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-icon svg {
-            width: 50px;
-            height: 50px;
-            fill: white;
-        }
-        
-        .modal h2 {
-            text-align: center;
-            font-size: 20px;
-            margin-bottom: 15px;
-        }
-        
-        .modal p {
-            text-align: center;
-            color: #8899a6;
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 25px;
-        }
-        
-        .modal-btn {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        
-        .modal-btn.primary {
-            background: linear-gradient(135deg, #7b3ff2, #9c6ade);
-            color: white;
-        }
-        
-        .modal-btn.secondary {
-            background: transparent;
-            color: #8899a6;
-        }
-        
-        .bot-link {
-            text-align: center;
-            color: #8899a6;
-            font-size: 14px;
-            margin-top: 15px;
-        }
-        
-        /* Success checkmark animation */
-        .success-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        
-        .success-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        .success-checkmark {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: #4caf50;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform: scale(0);
-            transition: transform 0.3s ease;
-        }
-        
-        .success-overlay.active .success-checkmark {
-            transform: scale(1);
-            animation: pulse 0.5s ease;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
-        .success-checkmark svg {
-            width: 60px;
-            height: 60px;
-            stroke: white;
-            stroke-width: 3;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            fill: none;
-            stroke-dasharray: 100;
-            stroke-dashoffset: 100;
-        }
-        
-        .success-overlay.active .success-checkmark svg {
-            animation: draw 0.5s ease forwards 0.2s;
-        }
-        
-        @keyframes draw {
-            to {
-                stroke-dashoffset: 0;
-            }
-        }
-        
-        .wallet-info {
-            background: #1e2732;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            display: none;
-        }
-        
-        .wallet-info.active {
-            display: block;
-        }
-        
-        .wallet-address {
-            word-break: break-all;
-            color: #8899a6;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <!-- Audio элемент для звука -->
-    <audio id="successSound">
-        <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3" type="audio/mpeg">
-    </audio>
-    
-    <div class="header">
-        <h1>SendingCrypto</h1>
-        <button class="menu-btn">⋮</button>
-    </div>
-    
-    <div class="content">
-        <button id="connectWalletBtn" class="modal-btn primary" style="max-width: 300px; margin: 20px auto; display: block;">
-            Подключить кошелёк
-        </button>
-        
-        <div class="wallet-info" id="walletInfo">
-            <h3>Кошелёк подключён</h3>
-            <div class="wallet-address" id="walletAddress"></div>
-            <button id="disconnectBtn" class="modal-btn secondary" style="margin-top: 15px;">
-                Отключить кошелёк
-            </button>
-        </div>
-    </div>
-    
-    <!-- Модальное окно -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
-            <button class="modal-close" id="modalClose">×</button>
-            <div class="modal-icon">
-                <svg viewBox="0 0 56 56">
-                    <path d="M28,0C12.5,0,0,12.5,0,28s12.5,28,28,28s28-12.5,28-28S43.5,0,28,0z M28,6c5.4,0,10.4,2,14.2,5.2l-4.2,4.2 c-2.8-2.2-6.3-3.4-10-3.4c-8.8,0-16,7.2-16,16s7.2,16,16,16s16-7.2,16-16c0-3.7-1.3-7.2-3.4-10l4.2-4.2C47,17.6,50,22.6,50,28 c0,12.1-9.9,22-22,22S6,40.1,6,28S15.9,6,28,6z"/>
-                </svg>
-            </div>
-            <h2>Подключить TON кошелёк</h2>
-            <p>Подключите кошелёк, вы сможете использовать TON-адрес для переводов и авторизации. Можно пропустить.</p>
-            <button class="modal-btn primary" id="connectTonBtn">Подключить TON кошелёк</button>
-            <button class="modal-btn secondary" id="skipBtn">Пропустить</button>
-            <div class="bot-link">@SendingCrypto_bot</div>
-        </div>
-    </div>
-    
-    <!-- Success overlay -->
-    <div class="success-overlay" id="successOverlay">
-        <div class="success-checkmark">
-            <svg viewBox="0 0 52 52">
-                <polyline points="14 27 22 35 38 19"/>
-            </svg>
-        </div>
-    </div>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SendingCrypto Bot</title>
 
-    <script>
-        // Инициализация Telegram Web App
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
-        
-        // Инициализация TON Connect UI
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-           const manifestUrl = 'https://sending-crypto.vercel.app/tonconnect-manifest.json';
-            buttonRootId: 'ton-connect-button'
-        });
-        
-        // Элементы
-        const modal = document.getElementById('modalOverlay');
-        const modalClose = document.getElementById('modalClose');
-        const connectWalletBtn = document.getElementById('connectWalletBtn');
-        const connectTonBtn = document.getElementById('connectTonBtn');
-        const skipBtn = document.getElementById('skipBtn');
-        const successOverlay = document.getElementById('successOverlay');
-        const successSound = document.getElementById('successSound');
-        const walletInfo = document.getElementById('walletInfo');
-        const walletAddress = document.getElementById('walletAddress');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        
-        // Проверка подключения при загрузке
-        tonConnectUI.onStatusChange((wallet) => {
-            if (wallet) {
-                updateWalletUI(wallet);
-            } else {
-                walletInfo.classList.remove('active');
-                connectWalletBtn.style.display = 'block';
-            }
-        });
-        
-        // Открыть модальное окно
-        connectWalletBtn.addEventListener('click', () => {
-            modal.classList.add('active');
-        });
-        
-        // Закрыть модальное окно
-        modalClose.addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
-        
-        skipBtn.addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
-        
-        // Закрыть при клике вне модального окна
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
-        });
-        
-        // Подключить TON кошелёк
-        connectTonBtn.addEventListener('click', async () => {
-            try {
-                const connectedWallet = await tonConnectUI.connectWallet();
-                
-                // Закрыть модальное окно
-                modal.classList.remove('active');
-                
-                // Показать успешное подключение
-                showSuccess();
-                
-                // Обновить UI
-                setTimeout(() => {
-                    updateWalletUI(connectedWallet);
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Ошибка подключения:', error);
-                tg.showAlert('Не удалось подключить кошелёк. Попробуйте снова.');
-            }
-        });
-        
-        // Отключить кошелёк
-        disconnectBtn.addEventListener('click', async () => {
-            try {
-                await tonConnectUI.disconnect();
-                walletInfo.classList.remove('active');
-                connectWalletBtn.style.display = 'block';
-                tg.showAlert('Кошелёк отключён');
-            } catch (error) {
-                console.error('Ошибка отключения:', error);
-            }
-        });
-        
-        // Показать анимацию успеха
-        function showSuccess() {
-            successOverlay.classList.add('active');
-            
-            // Воспроизвести звук
-            successSound.play().catch(err => {
-                console.log('Не удалось воспроизвести звук:', err);
-            });
-            
-            // Скрыть через 1.5 секунды
-            setTimeout(() => {
-                successOverlay.classList.remove('active');
-            }, 1500);
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root {
+      --bg: #14192a;
+      --glass: rgba(23, 28, 46, 0.45);
+      --border: rgba(255, 255, 255, 0.05);
+      --glow: rgba(167, 139, 250, 0.5);
+    }
+
+    body {
+      background: linear-gradient(180deg, #14192a 0%, #1b2236 100%);
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      color: white;
+    }
+
+    .glass {
+      position: relative;
+      background: var(--glass);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .glass::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(circle at bottom,
+        rgba(167, 139, 250, 0.25) 0%,
+        rgba(167, 139, 250, 0.05) 40%,
+        transparent 80%);
+      opacity: 0.4;
+      z-index: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .glass:hover::before {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+
+    .glass > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-glow {
+      transition: all 0.3s ease;
+    }
+
+    .btn-glow:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 14px var(--glow);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade {
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(55, 65, 81, 0.85);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  </style>
+</head>
+
+<body class="antialiased text-white">
+  <main class="min-h-screen flex justify-center p-4">
+    <div class="w-full max-w-sm space-y-5">
+
+      <!-- Top Card -->
+      <div class="glass p-4 flex items-center gap-3 fade">
+        <img id="user-photo" src="https://via.placeholder.com/80" alt="avatar"
+          class="w-12 h-12 rounded-full border border-white/10 object-cover">
+        <div class="flex-1">
+          <div id="user-name" class="text-sm font-semibold">Гость</div>
+        </div>
+        <button class="p-2 rounded-full bg-white/5 hover:bg-white/10 btn-glow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Balance -->
+      <div class="glass text-center py-6 fade">
+        <div class="flex justify-center items-center gap-3">
+          <div id="balance-amount" class="text-3xl font-extrabold">$0</div>
+          <button id="toggle-balance" class="p-2 rounded-full bg-white/5 hover:bg-white/10 btn-glow">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
+                stroke="currentColor" stroke-width="1.3" />
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.3" />
+            </svg>
+          </button>
+        </div>
+        <div class="text-xs text-white/60 mt-2">Общий баланс в USD</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-4 gap-3 text-center fade">
+        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+          </svg>
+          <div class="text-xs">Пополнить</div>
+        </button>
+
+        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" d="M5 12h14" />
+          </svg>
+          <div class="text-xs">Вывести</div>
+        </button>
+
+        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M16 3v5h5M8 21v-5H3M21 8l-5-5M3 16l5 5" />
+          </svg>
+          <div class="text-xs">Обмен</div>
+        </button>
+
+        <button class="glass p-3 rounded-xl btn-glow flex flex-col items-center justify-center gap-2 h-20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 17l4-4 4 4 8-8" />
+          </svg>
+          <div class="text-xs">Биржа</div>
+        </button>
+      </div>
+
+      <!-- QR -->
+      <div class="glass p-4 flex justify-between items-center btn-glow fade" onclick="showToast()">
+        <div>
+          <div class="text-sm font-semibold">Оплата по QR-коду</div>
+          <div class="text-xs text-white/60">Оплачивайте покупки с помощью криптовалюты</div>
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+
+      <!-- Assets -->
+      <div class="text-sm text-white/60 flex justify-between fade">
+        <span>Активы</span>
+        <span class="text-sky-400 cursor-pointer" onclick="showToast()">Скрыть мелкие балансы</span>
+      </div>
+      <div id="assets" class="space-y-3 fade"></div>
+
+    </div>
+  </main>
+
+  <div id="toast">Функция скоро будет доступна 🚀</div>
+
+  <script>
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    const assets = [
+      { symbol: 'BTCUSDT', label: 'Bitcoin', short: 'BTC' },
+      { symbol: 'ETHUSDT', label: 'Ethereum', short: 'ETH' },
+      { symbol: 'LTCUSDT', label: 'Litecoin', short: 'LTC' },
+      { symbol: 'SOLUSDT', label: 'Solana', short: 'SOL' },
+      { symbol: 'TONUSDT', label: 'Toncoin', short: 'TON' }
+    ];
+
+    async function fetchBinancePrices() {
+      const container = document.getElementById('assets');
+      container.innerHTML = '';
+      for (const a of assets) {
+        const url = `https://api.binance.com/api/v3/ticker/24hr?symbol=${a.symbol}`;
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          const price = parseFloat(data.lastPrice).toFixed(2);
+          const change = parseFloat(data.priceChangePercent).toFixed(2);
+          const changeColor = change >= 0 ? 'text-green-400' : 'text-red-400';
+          const el = document.createElement('div');
+          el.className = 'glass p-4 flex justify-between items-center rounded-2xl btn-glow';
+          el.innerHTML = `
+            <div>
+              <div class="font-semibold">${a.label}</div>
+              <div class="text-xs text-white/60">$${price} <span class="${changeColor}">${change}%</span></div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-medium">0 ${a.short}</div>
+              <div class="text-xs text-white/60">$0</div>
+            </div>`;
+          container.appendChild(el);
+        } catch (e) {
+          console.error('Ошибка при загрузке данных Binance:', e);
         }
-        
-        // Обновить UI с информацией о кошельке
-        function updateWalletUI(wallet) {
-            const address = wallet.account.address;
-            const shortAddress = address.slice(0, 6) + '...' + address.slice(-4);
-            
-            walletAddress.textContent = shortAddress;
-            walletInfo.classList.add('active');
-            connectWalletBtn.style.display = 'none';
-        }
-    </script>
+      }
+    }
+
+    fetchBinancePrices();
+
+    (function initTelegram() {
+      const tg = window.Telegram?.WebApp;
+      if (!tg) return;
+      const user = tg.initDataUnsafe?.user;
+      if (user) {
+        document.getElementById('user-name').textContent = user.first_name || 'Пользователь';
+        if (user.photo_url) document.getElementById('user-photo').src = user.photo_url;
+      }
+    })();
+  </script>
 </body>
 </html>
-
