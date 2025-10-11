@@ -23,7 +23,6 @@
       font-family: 'Inter', sans-serif;
       color: white;
       visibility: hidden; /* скрываем до инициализации */
-      transition: visibility 0s ease 0.3s;
     }
 
     .glass {
@@ -32,7 +31,6 @@
       border: 1px solid var(--border);
       border-radius: 1rem;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-      overflow: hidden;
       transition: all 0.3s ease;
     }
 
@@ -73,6 +71,23 @@
     #toast.show {
       opacity: 1;
       transform: translate(-50%, 0);
+    }
+
+    /* Анимации панели */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #ton-panel {
+      transform: translateY(100%);
+      opacity: 0;
+      transition: all 0.5s ease;
+    }
+
+    #ton-panel.active {
+      transform: translateY(0);
+      opacity: 1;
     }
   </style>
 </head>
@@ -149,18 +164,6 @@
         </button>
       </div>
 
-      <!-- QR -->
-      <div class="glass p-4 flex justify-between items-center btn-glow fade" onclick="showToast()">
-        <div>
-          <div class="text-sm font-semibold">Оплата по QR-коду</div>
-          <div class="text-xs text-white/60">Оплачивайте покупки с помощью криптовалюты</div>
-        </div>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="1.8"
-            stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </div>
-
       <!-- Курсы -->
       <div class="text-sm text-white/60 flex justify-between fade">
         <span>Активы</span>
@@ -171,16 +174,25 @@
   </main>
 
   <!-- Панель TON -->
-  <div id="ton-panel" class="fixed inset-x-0 bottom-0 bg-black/50 backdrop-blur-md flex justify-center items-end z-50 transition-all duration-300 hidden">
-    <div class="glass w-full max-w-sm rounded-t-3xl p-6 pb-8 text-center shadow-lg relative">
+  <div id="ton-panel" class="fixed inset-x-0 bottom-0 flex justify-center items-end z-50">
+    <div class="glass w-full max-w-sm rounded-t-3xl p-6 pb-8 text-center shadow-2xl relative border border-white/10 backdrop-blur-md">
       <button id="close-ton" class="absolute top-3 right-3 text-white/60 hover:text-white text-xl">&times;</button>
-      <div class="flex justify-center mb-4">
-        <img src="https://cdn.jsdelivr.net/gh/ton-community/assets@main/blockchains/ton/info/logo.svg" alt="TON" class="w-14 h-14" loading="lazy">
+
+      <div class="flex justify-center mb-5">
+        <img src="https://cdn.jsdelivr.net/gh/ton-community/assets@main/blockchains/ton/info/logo.svg"
+             alt="TON" class="w-16 h-16 drop-shadow-[0_0_10px_rgba(80,160,255,0.5)]">
       </div>
-      <h2 class="text-lg font-semibold mb-2">Подключите TON-кошелёк</h2>
-      <p class="text-sm text-white/60 mb-5">Подключив кошелёк, вы сможете использовать TON-адрес для переводов и авторизации. Можно пропустить.</p>
-      <div id="ton-connect-button" class="mb-5 flex justify-center"></div>
-      <button id="skip-ton" class="text-white/70 hover:text-white text-sm">Пропустить</button>
+
+      <h2 class="text-lg font-semibold mb-2 tracking-wide">Подключите TON-кошелёк</h2>
+      <p class="text-sm text-white/70 mb-6 px-3 leading-relaxed">
+        Подключив кошелёк, вы сможете использовать TON для переводов, покупок и авторизации.
+      </p>
+
+      <div id="ton-connect-button" class="flex justify-center mb-4"></div>
+
+      <button id="skip-ton" class="text-white/70 hover:text-white text-sm mt-2 underline decoration-dotted">
+        Пропустить
+      </button>
     </div>
   </div>
 
@@ -255,7 +267,7 @@
       storage.set('binance_cache_time', Date.now());
     }
 
-    // Telegram
+    // Telegram init
     (function initTelegram(){
       const tg = window.Telegram?.WebApp;
       if(!tg)return;
@@ -268,41 +280,38 @@
 
     window.addEventListener('DOMContentLoaded', async () => {
       const wallet = storage.get('ton_wallet');
-      const skipped = storage.get('ton_skip');
       const tonPanel = document.getElementById('ton-panel');
       const mainMenu = document.getElementById('main-menu');
       document.body.style.visibility = 'visible';
 
-      if (wallet || skipped) {
+      if (wallet) {
         mainMenu.classList.remove('hidden');
         setTimeout(()=>mainMenu.classList.add('visible'),50);
         fetchBinancePrices();
-        if (wallet) {
-          const short = wallet.slice(0,6) + '...' + wallet.slice(-4);
-          const w = document.getElementById('wallet-short');
-          w.textContent = short;
-          w.classList.remove('hidden');
-        }
+        const short = wallet.slice(0,6) + '...' + wallet.slice(-4);
+        const w = document.getElementById('wallet-short');
+        w.textContent = short;
+        w.classList.remove('hidden');
       } else {
-        tonPanel.classList.remove('hidden');
+        tonPanel.classList.add('active');
       }
 
       document.getElementById('skip-ton').onclick = () => {
-        storage.set('ton_skip', true);
-        tonPanel.classList.add('hidden');
+        tonPanel.classList.remove('active');
         mainMenu.classList.remove('hidden');
         setTimeout(()=>mainMenu.classList.add('visible'),50);
         fetchBinancePrices();
       };
+
       document.getElementById('close-ton').onclick = () => {
-        storage.set('ton_skip', true);
-        tonPanel.classList.add('hidden');
+        tonPanel.classList.remove('active');
         mainMenu.classList.remove('hidden');
         setTimeout(()=>mainMenu.classList.add('visible'),50);
         fetchBinancePrices();
       };
     });
 
+    // TonConnect
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
       manifestUrl: "https://sending-crypto.vercel.app/tonconnect-manifest.json"
     });
@@ -311,7 +320,7 @@
     tonConnectUI.onStatusChange((wallet) => {
       if (wallet) {
         storage.set('ton_wallet', wallet.account.address);
-        document.getElementById('ton-panel').classList.add('hidden');
+        document.getElementById('ton-panel').classList.remove('active');
         const mainMenu = document.getElementById('main-menu');
         mainMenu.classList.remove('hidden');
         setTimeout(()=>mainMenu.classList.add('visible'),50);
