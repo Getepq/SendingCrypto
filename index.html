@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SendingCrypto Bot</title>
 
-  <!-- Tailwind -->
+  <!-- Tailwind + Telegram SDK -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -22,7 +22,7 @@
       min-height: 100vh;
       font-family: 'Inter', sans-serif;
       color: white;
-      visibility: hidden; /* скрываем до инициализации */
+      visibility: hidden;
     }
 
     .glass {
@@ -34,24 +34,13 @@
       transition: all 0.3s ease;
     }
 
-    .btn-glow {
-      transition: all 0.3s ease;
-    }
+    .btn-glow { transition: all 0.3s ease; }
+    .btn-glow:hover { transform: translateY(-2px); box-shadow: 0 0 14px var(--glow); }
 
-    .btn-glow:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 14px var(--glow);
-    }
+    #main-menu { opacity: 0; transition: opacity 0.5s ease; }
+    #main-menu.visible { opacity: 1; }
 
-    #main-menu {
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    #main-menu.visible {
-      opacity: 1;
-    }
-
+    /* Toast */
     #toast {
       position: fixed;
       bottom: 24px;
@@ -67,24 +56,18 @@
       pointer-events: none;
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-    #toast.show {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-
-    /* Анимации панели */
+    /* Панель TON */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(40px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
     #ton-panel {
       transform: translateY(100%);
       opacity: 0;
       transition: all 0.5s ease;
     }
-
     #ton-panel.active {
       transform: translateY(0);
       opacity: 1;
@@ -164,7 +147,6 @@
         </button>
       </div>
 
-      <!-- Курсы -->
       <div class="text-sm text-white/60 flex justify-between fade">
         <span>Активы</span>
         <span class="text-sky-400 cursor-pointer" onclick="showToast()">Скрыть мелкие балансы</span>
@@ -175,12 +157,12 @@
 
   <!-- Панель TON -->
   <div id="ton-panel" class="fixed inset-x-0 bottom-0 flex justify-center items-end z-50">
-    <div class="glass w-full max-w-sm rounded-t-3xl p-6 pb-8 text-center shadow-2xl relative border border-white/10 backdrop-blur-md">
+    <div class="glass w-full max-w-sm rounded-t-3xl p-6 pb-8 text-center shadow-2xl relative border border-white/10 backdrop-blur-md animate-[fadeUp_0.4s_ease_forwards]">
       <button id="close-ton" class="absolute top-3 right-3 text-white/60 hover:text-white text-xl">&times;</button>
 
       <div class="flex justify-center mb-5">
-        <img src="https://cdn.jsdelivr.net/gh/ton-community/assets@main/blockchains/ton/info/logo.svg"
-             alt="TON" class="w-16 h-16 drop-shadow-[0_0_10px_rgba(80,160,255,0.5)]">
+        <img src="https://raw.githubusercontent.com/ton-community/assets/main/blockchains/ton/info/logo.svg"
+             alt="TON" class="w-16 h-16 drop-shadow-[0_0_10px_rgba(80,160,255,0.6)]" loading="lazy">
       </div>
 
       <h2 class="text-lg font-semibold mb-2 tracking-wide">Подключите TON-кошелёк</h2>
@@ -311,11 +293,15 @@
       };
     });
 
-    // TonConnect
-    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+    /* ✅ Universal TonConnect initialization */
+    const TonConnect = window.TON_CONNECT_UI?.TonConnectUI || window.TonConnectUI;
+    const tonConnectUI = new TonConnect({
       manifestUrl: "https://sending-crypto.vercel.app/tonconnect-manifest.json"
     });
-    tonConnectUI.createWalletButton('#ton-connect-button');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      tonConnectUI.createWalletButton('#ton-connect-button');
+    });
 
     tonConnectUI.onStatusChange((wallet) => {
       if (wallet) {
