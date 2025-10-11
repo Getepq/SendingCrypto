@@ -197,14 +197,20 @@
       </div>
       <div id="assets" class="space-y-3 fade"></div>
 
+      <!-- 🔹 Кнопка подключения TON -->
+      <div id="connect-wallet" class="glass p-4 text-center btn-glow fade cursor-pointer">
+        <span class="text-sm font-semibold">Подключить TON-кошелёк</span>
+      </div>
+
     </div>
   </main>
 
   <div id="toast">Функция скоро будет доступна 🚀</div>
 
   <script>
-    function showToast() {
+    function showToast(text) {
       const toast = document.getElementById('toast');
+      if (text) toast.textContent = text;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2500);
     }
@@ -257,6 +263,26 @@
         if (user.photo_url) document.getElementById('user-photo').src = user.photo_url;
       }
     })();
+  </script>
+
+  <!-- ✅ TonConnect SDK -->
+  <script type="module">
+    import { TonConnectUI } from "https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js";
+
+    const tonConnectUI = new TonConnectUI({
+      manifestUrl: "https://your-domain.com/tonconnect-manifest.json" // замените на ваш URL
+    });
+
+    tonConnectUI.createWalletButton('#connect-wallet');
+
+    tonConnectUI.onStatusChange((wallet) => {
+      if (wallet) {
+        console.log('✅ Подключен кошелёк:', wallet);
+        showToast(`Кошелёк подключен: ${wallet.account.address.slice(0, 12)}...`);
+      } else {
+        showToast('Кошелёк отключён');
+      }
+    });
   </script>
 </body>
 </html>
