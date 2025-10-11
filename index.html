@@ -11,12 +11,16 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+  <!-- TonConnect SDK (UMD) -->
+  <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect.umd.min.js"></script>
+
   <style>
     :root {
       --bg: #14192a;
       --glass: rgba(23, 28, 46, 0.45);
       --border: rgba(255, 255, 255, 0.05);
       --glow: rgba(167, 139, 250, 0.5);
+      --accent: #7c5cff; /* цвет лучиков/галочки */
     }
 
     body {
@@ -72,19 +76,11 @@
     }
 
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .fade {
-      animation: fadeIn 0.4s ease forwards;
-    }
+    .fade { animation: fadeIn 0.4s ease forwards; }
 
     #toast {
       position: fixed;
@@ -100,11 +96,128 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 120;
     }
 
-    #toast.show {
-      opacity: 1;
-      transform: translate(-50%, 0);
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    /* TON modal styles (kept separate so doesn't change main UI) */
+    .ton-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100; /* above UI */
+      pointer-events: auto;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .ton-modal .modal-card {
+      width: 100%;
+      max-width: 420px;
+      background: linear-gradient(180deg, rgba(10,12,20,0.9), rgba(18,20,30,0.9));
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 40px rgba(2,6,23,0.8);
+      border: 1px solid rgba(255,255,255,0.06);
+      text-align: center;
+      color: #fff;
+      position: relative;
+      overflow: visible;
+    }
+    .ton-modal .close-x {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 110;
+    }
+    .ton-modal .modal-title { font-weight: 700; font-size: 18px; margin-top: 6px; margin-bottom: 8px; }
+    .ton-modal .modal-desc { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 18px; }
+    .ton-modal .btn-primary {
+      background: linear-gradient(90deg, var(--accent), #5ac8ff);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      width: 100%;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(124,92,255,0.18);
+      margin-bottom: 10px;
+    }
+    .ton-modal .btn-secondary {
+      background: transparent;
+      color: rgba(255,255,255,0.9);
+      padding: 10px;
+      border-radius: 10px;
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+    }
+
+    /* success check + rays animation */
+    .success-overlay {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      z-index: 130;
+      pointer-events: none;
+      display: none;
+    }
+    .success-wrap {
+      width: 160px;
+      height: 160px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: linear-gradient(180deg, rgba(124,92,255,0.12), rgba(90,200,255,0.06));
+      box-shadow: 0 10px 40px rgba(60,30,120,0.12);
+      transform-origin: center;
+      animation: successPop 320ms ease-out forwards;
+    }
+    @keyframes successPop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .check {
+      width: 74px;
+      height: 74px;
+      background: linear-gradient(90deg, var(--accent), #5ac8ff);
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 30px rgba(124,92,255,0.28);
+      animation: checkScale 900ms ease forwards;
+    }
+    @keyframes checkScale { 0% { transform: scale(0.6); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+    .check svg { filter: drop-shadow(0 6px 20px rgba(124,92,255,0.28)); }
+    .ray {
+      position: absolute;
+      width: 6px;
+      height: 36px;
+      border-radius: 6px;
+      background: linear-gradient(180deg, rgba(124,92,255,0.95), rgba(90,200,255,0.35));
+      top: calc(50% - 18px);
+      left: calc(50% - 3px);
+      transform-origin: center bottom;
+      opacity: 0;
+      animation: rayAnim 900ms ease forwards;
+    }
+    @keyframes rayAnim {
+      0% { transform: translateY(6px) scaleY(0.3); opacity: 0; }
+      40% { opacity: 1; transform: translateY(-4px) scaleY(1.05); }
+      100% { opacity: 0; transform: translateY(-26px) scaleY(0.9); }
     }
   </style>
 </head>
@@ -202,7 +315,41 @@
 
   <div id="toast">Функция скоро будет доступна 🚀</div>
 
+  <!-- TON modal (hidden by default) -->
+  <div id="ton-modal" class="ton-modal" aria-hidden="true" style="display:none;">
+    <div class="modal-card">
+      <div class="close-x" id="modal-close" title="Закрыть">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div style="margin-top:6px;">
+        <div style="width:72px;height:72px;border-radius:18px;background:linear-gradient(180deg,var(--accent),#5ac8ff);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 8px 30px rgba(124,92,255,0.16);">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M12 2L19 8.6V15.4L12 22L5 15.4V8.6L12 2Z" stroke="white" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <div class="modal-title">Подключить TON кошелёк</div>
+      <div class="modal-desc">Подключив кошелёк, вы сможете использовать TON-адрес для переводов и авторизации. Можно пропустить.</div>
+
+      <button id="connect-ton-btn" class="btn-primary">Подключить TON кошелёк</button>
+      <button id="skip-ton-btn" class="btn-secondary">Пропустить</button>
+    </div>
+  </div>
+
+  <!-- success overlay -->
+  <div id="success-overlay" class="success-overlay" aria-hidden="true">
+    <div class="success-wrap" id="success-wrap">
+      <!-- rays inserted dynamically -->
+      <div class="check" aria-hidden="true">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+          <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // ---------------- existing code (unchanged) ----------------
     function showToast() {
       const toast = document.getElementById('toast');
       toast.classList.add('show');
@@ -256,6 +403,176 @@
         document.getElementById('user-name').textContent = user.first_name || 'Пользователь';
         if (user.photo_url) document.getElementById('user-photo').src = user.photo_url;
       }
+    })();
+    // ------------------------------------------------------------
+
+    // --- TON connect logic + modal + animation ---
+    (function tonIntegration() {
+      const modal = document.getElementById('ton-modal');
+      const btnConnect = document.getElementById('connect-ton-btn');
+      const btnSkip = document.getElementById('skip-ton-btn');
+      const btnClose = document.getElementById('modal-close');
+      const successOverlay = document.getElementById('success-overlay');
+      const successWrap = document.getElementById('success-wrap');
+      const audioUrl = 'https://files.catbox.moe/yogz7u.mp3';
+      const audio = new Audio(audioUrl);
+      audio.preload = 'auto';
+
+      // small helpers
+      function showToastCustom(text) {
+        const t = document.getElementById('toast');
+        t.textContent = text;
+        t.classList.add('show');
+        setTimeout(()=> t.classList.remove('show'), 3000);
+      }
+
+      function openModal() {
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden','false');
+      }
+      function closeModal() {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden','true');
+      }
+
+      // short address helper
+      function shortAddr(addr) {
+        if (!addr) return '';
+        if (addr.length <= 12) return addr;
+        return addr.slice(0,6) + '…' + addr.slice(-4);
+      }
+
+      // TonConnect init
+      const TonConnectConstructor = window.TonConnectSDK?.TonConnect || window.TonConnect;
+      let tonConnect = null;
+      let activeAccount = null;
+
+      try {
+        if (TonConnectConstructor) {
+          tonConnect = new TonConnectConstructor({ manifestUrl: `${location.origin}/tonconnect-manifest.json` });
+        } else {
+          console.warn('TonConnect SDK not available');
+        }
+      } catch (e) {
+        console.warn('TonConnect init error', e);
+      }
+
+      // fetch TON balance (toncenter used as example)
+      async function updateTonBalance(address) {
+        try {
+          const res = await fetch(`https://toncenter.com/api/v2/getAddressInformation?address=${encodeURIComponent(address)}`);
+          const j = await res.json();
+          const nano = parseInt(j.result?.balance || j.balance || 0, 10) || 0;
+          const ton = nano / 1e9;
+          // show as TON (you can convert to USD if you want)
+          document.getElementById('balance-amount').textContent = ton.toFixed(6) + ' TON';
+        } catch (e) {
+          console.warn('Cannot fetch TON balance', e);
+        }
+      }
+
+      // success animation: create rays, play sound, show check
+      function showSuccessAnimation() {
+        // cleanup previous
+        successWrap.querySelectorAll('.ray').forEach(r => r.remove());
+
+        const raysCount = 12;
+        for (let i=0;i<raysCount;i++) {
+          const el = document.createElement('div');
+          el.className = 'ray';
+          const angle = (360 / raysCount) * i;
+          el.style.transform = `rotate(${angle}deg) translateY(-10px)`;
+          el.style.animationDelay = `${i * 28}ms`;
+          successWrap.appendChild(el);
+        }
+
+        successOverlay.style.display = 'block';
+        successOverlay.setAttribute('aria-hidden','false');
+
+        audio.currentTime = 0;
+        audio.play().catch(()=>{ /* autoplay may be blocked on some platforms */ });
+
+        // hide after animation duration
+        setTimeout(() => {
+          successOverlay.style.display = 'none';
+          successOverlay.setAttribute('aria-hidden','true');
+        }, 1500);
+      }
+
+      // connect button behavior
+      btnConnect.addEventListener('click', async () => {
+        // hide modal immediately to prevent TonConnect UI being layered under modal
+        closeModal();
+
+        if (!tonConnect) {
+          showToastCustom('TON Connect недоступен');
+          return;
+        }
+
+        try {
+          const session = await tonConnect.connect();
+          activeAccount = session.account;
+          if (!activeAccount?.address) {
+            showToastCustom('Кошелёк подключён, но адрес не получен');
+            return;
+          }
+
+          // save address locally so modal won't show next time
+          try { localStorage.setItem('ton_address', activeAccount.address); } catch (e) { /* ignore */ }
+
+          // update top UI: show short address near nickname
+          const tg = window.Telegram?.WebApp;
+          const user = tg?.initDataUnsafe?.user;
+          const displayName = (user?.first_name || 'Пользователь');
+          document.getElementById('user-name').textContent = `${displayName} · ${shortAddr(activeAccount.address)}`;
+
+          // fetch & update balance
+          await updateTonBalance(activeAccount.address);
+
+          // success animation + sound
+          showSuccessAnimation();
+
+        } catch (err) {
+          console.error('Ошибка подключения TON:', err);
+          showToastCustom('Подключение отменено или ошибка');
+          // optionally re-open modal after small delay:
+          setTimeout(()=> openModal(), 800);
+        }
+      });
+
+      // skip or close -> hide modal and do nothing
+      btnSkip.addEventListener('click', () => closeModal());
+      btnClose.addEventListener('click', () => closeModal());
+
+      // show modal only if no saved address
+      window.addEventListener('load', ()=> {
+        // small delay to let page render
+        setTimeout(()=> {
+          try {
+            const saved = localStorage.getItem('ton_address');
+            if (saved) {
+              // if saved, set short address in UI and update balance
+              const tg = window.Telegram?.WebApp;
+              const user = tg?.initDataUnsafe?.user;
+              const displayName = (user?.first_name || 'Пользователь');
+              document.getElementById('user-name').textContent = `${displayName} · ${shortAddr(saved)}`;
+              updateTonBalance(saved);
+            } else {
+              // show modal prompting connect
+              openModal();
+            }
+          } catch (e) {
+            openModal();
+          }
+        }, 300);
+      });
+
+      // expose for debug
+      window._ton = {
+        tonConnect,
+        activeAccount: ()=> activeAccount,
+        openModal, closeModal
+      };
     })();
   </script>
 </body>
