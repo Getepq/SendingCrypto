@@ -235,11 +235,13 @@
     });
 
     // TonConnect init
-    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: "https://sending-crypto.vercel.app/tonconnect-manifest.json"
-    });
+  const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+  manifestUrl: "https://sending-crypto.vercel.app/tonconnect-manifest.json"
+});
 
-    tonConnectUI.renderWalletButton('#ton-connect-button');
+// 🟢 создаём кнопку в нужный контейнер
+tonConnectUI.createWalletButton('#ton-connect-button');
+
 
     tonConnectUI.onStatusChange((wallet) => {
       if (wallet) {
@@ -253,3 +255,4 @@
   </script>
 </body>
 </html>
+
